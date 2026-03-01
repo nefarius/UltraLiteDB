@@ -22,8 +22,8 @@ namespace UltraLiteDB.Tests.Engine
             Assert.AreEqual(oid2, c2);
             Assert.AreEqual(oid3, c3);
 
-            Assert.AreEqual(c1.CompareTo(c2), -1); // 1 < 2
-            Assert.AreEqual(c2.CompareTo(c3), -1); // 2 < 3
+            Assert.AreEqual(-1, c1.CompareTo(c2)); // 1 < 2
+            Assert.AreEqual(-1, c2.CompareTo(c3)); // 2 < 3
 
             // serializations
             var joid = JsonSerializer.Serialize(c1);
