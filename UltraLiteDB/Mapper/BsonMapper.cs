@@ -98,6 +98,13 @@ namespace UltraLiteDB
         /// </summary>
         public Func<Type, string> ResolveCollectionName;
 
+        // Internal accessors for DirectBsonWriter/DirectBsonReader
+        internal Dictionary<Type, Func<object, BsonValue>> CustomSerializer => _customSerializer;
+        internal Dictionary<Type, Func<BsonValue, object>> CustomDeserializer => _customDeserializer;
+        internal Dictionary<Type, BsonValue> CustomTypeToId => _customTypeToId;
+        internal Dictionary<BsonValue, Type> CustomIdToType => _customIdToType;
+        internal Func<Type, object> TypeInstantiator => _typeInstantiator;
+
         #endregion
 
         public BsonMapper(Func<Type, object> customTypeInstantiator = null)

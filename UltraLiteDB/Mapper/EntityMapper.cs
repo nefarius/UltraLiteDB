@@ -26,6 +26,28 @@ namespace UltraLiteDB
         public Type ForType { get; set; }
 
         /// <summary>
+        /// Cached lookup from BSON field name to MemberMapper for O(1) access during deserialization
+        /// </summary>
+        private Dictionary<string, MemberMapper> _fieldLookup;
+
+        public Dictionary<string, MemberMapper> FieldLookup
+        {
+            get
+            {
+                if (_fieldLookup == null)
+                {
+                    _fieldLookup = new Dictionary<string, MemberMapper>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var m in Members)
+                    {
+                        if (m.FieldName != null)
+                            _fieldLookup[m.FieldName] = m;
+                    }
+                }
+                return _fieldLookup;
+            }
+        }
+
+        /// <summary>
         /// Resolve expression to get member mapped
         /// </summary>
         public MemberMapper GetMember(Expression expr)

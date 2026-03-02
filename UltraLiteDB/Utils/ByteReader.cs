@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using System.Buffers.Binary;
 
 namespace UltraLiteDB
 {
@@ -18,11 +19,11 @@ namespace UltraLiteDB
             _pos = 0;
         }
 
-        public ByteReader(byte[] buffer)
+        public ByteReader(byte[] buffer, int offset = 0)
         {
             _buffer = buffer;
             _length = buffer.Length;
-            _pos = 0;
+            _pos = offset;
         }
 
         public ByteReader(ArraySegment<byte> buffer)
@@ -53,7 +54,6 @@ namespace UltraLiteDB
             _pos = buffer.Offset;
         }
 
-
         public void Skip(int length)
         {
             _pos += length;
@@ -81,38 +81,44 @@ namespace UltraLiteDB
 
         public UInt16 ReadUInt16()
         {
+            var value = BinaryPrimitives.ReadUInt16LittleEndian(new ReadOnlySpan<byte>(_buffer, _pos, 2));
             _pos += 2;
-            return BitConverter.ToUInt16(_buffer, _pos - 2);
+            return value;
         }
 
         public UInt32 ReadUInt32()
         {
+            var value = BinaryPrimitives.ReadUInt32LittleEndian(new ReadOnlySpan<byte>(_buffer, _pos, 4));
             _pos += 4;
-            return BitConverter.ToUInt32(_buffer, _pos - 4);
+            return value;
         }
 
         public UInt64 ReadUInt64()
         {
+            var value = BinaryPrimitives.ReadUInt64LittleEndian(new ReadOnlySpan<byte>(_buffer, _pos, 8));
             _pos += 8;
-            return BitConverter.ToUInt64(_buffer, _pos - 8);
+            return value;
         }
 
         public Int16 ReadInt16()
         {
+            var value = BinaryPrimitives.ReadInt16LittleEndian(new ReadOnlySpan<byte>(_buffer, _pos, 2));
             _pos += 2;
-            return BitConverter.ToInt16(_buffer, _pos - 2);
+            return value;
         }
 
         public Int32 ReadInt32()
         {
+            var value = BinaryPrimitives.ReadInt32LittleEndian(new ReadOnlySpan<byte>(_buffer, _pos, 4));
             _pos += 4;
-            return BitConverter.ToInt32(_buffer, _pos - 4);
+            return value;
         }
 
         public Int64 ReadInt64()
         {
+            var value = BinaryPrimitives.ReadInt64LittleEndian(new ReadOnlySpan<byte>(_buffer, _pos, 8));
             _pos += 8;
-            return BitConverter.ToInt64(_buffer, _pos - 8);
+            return value;
         }
 
         public Single ReadSingle()

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using System.Buffers.Binary;
 
 namespace UltraLiteDB
 {
@@ -11,6 +12,7 @@ namespace UltraLiteDB
         public byte[] Buffer { get { return _buffer; } }
 
         public int Position { get { return _pos; } set { _pos = value; } }
+
 
         public ByteWriter()
         {
@@ -24,10 +26,10 @@ namespace UltraLiteDB
             _pos = 0;
         }
 
-        public ByteWriter(byte[] buffer)
+        public ByteWriter(byte[] buffer, int offset = 0)
         {
             _buffer = buffer;
-            _pos = 0;
+            _pos = offset;
         }
 
         public ByteWriter(ArraySegment<byte> buffer)
@@ -59,6 +61,20 @@ namespace UltraLiteDB
             _pos += length;
         }
 
+        public void EnsureCapacity(int additionalBytes)
+        {
+            if (_buffer == null)
+            {
+                _buffer = new byte[additionalBytes];
+            }
+            else if (_pos + additionalBytes > _buffer.Length)
+            {
+                var newBuffer = new byte[Math.Max(_buffer.Length * 2, _pos + additionalBytes)];
+                System.Buffer.BlockCopy(_buffer, 0, newBuffer, 0, _pos);
+                _buffer = newBuffer;
+            }
+        }
+
         #region Native data types
 
         public void Write(Byte value)
@@ -77,104 +93,56 @@ namespace UltraLiteDB
 
         public void Write(UInt16 value)
         {
-            var pi = BitConverter.GetBytes(value);
-
-            _buffer[_pos + 0] = pi[0];
-            _buffer[_pos + 1] = pi[1];
+            BinaryPrimitives.WriteUInt16LittleEndian(new Span<byte>(_buffer, _pos, 2), value);
 
             _pos += 2;
         }
 
         public void Write(UInt32 value)
         {
-            var pi = BitConverter.GetBytes(value);
-
-            _buffer[_pos + 0] = pi[0];
-            _buffer[_pos + 1] = pi[1];
-            _buffer[_pos + 2] = pi[2];
-            _buffer[_pos + 3] = pi[3];
+            BinaryPrimitives.WriteUInt32LittleEndian(new Span<byte>(_buffer, _pos, 4), value);
 
             _pos += 4;
         }
 
         public void Write(UInt64 value)
         {
-            var pi = BitConverter.GetBytes(value);
-
-            _buffer[_pos + 0] = pi[0];
-            _buffer[_pos + 1] = pi[1];
-            _buffer[_pos + 2] = pi[2];
-            _buffer[_pos + 3] = pi[3];
-            _buffer[_pos + 4] = pi[4];
-            _buffer[_pos + 5] = pi[5];
-            _buffer[_pos + 6] = pi[6];
-            _buffer[_pos + 7] = pi[7];
+            BinaryPrimitives.WriteUInt64LittleEndian(new Span<byte>(_buffer, _pos, 8), value);
 
             _pos += 8;
         }
 
         public void Write(Int16 value)
         {
-            var pi = BitConverter.GetBytes(value);
-
-            _buffer[_pos + 0] = pi[0];
-            _buffer[_pos + 1] = pi[1];
+            BinaryPrimitives.WriteInt16LittleEndian(new Span<byte>(_buffer, _pos, 2), value);
 
             _pos += 2;
         }
 
         public void Write(Int32 value)
         {
-            var pi = BitConverter.GetBytes(value);
-
-            _buffer[_pos + 0] = pi[0];
-            _buffer[_pos + 1] = pi[1];
-            _buffer[_pos + 2] = pi[2];
-            _buffer[_pos + 3] = pi[3];
+            BinaryPrimitives.WriteInt32LittleEndian(new Span<byte>(_buffer, _pos, 4), value);
 
             _pos += 4;
         }
 
         public void Write(Int64 value)
         {
-            var pi = BitConverter.GetBytes(value);
-
-            _buffer[_pos + 0] = pi[0];
-            _buffer[_pos + 1] = pi[1];
-            _buffer[_pos + 2] = pi[2];
-            _buffer[_pos + 3] = pi[3];
-            _buffer[_pos + 4] = pi[4];
-            _buffer[_pos + 5] = pi[5];
-            _buffer[_pos + 6] = pi[6];
-            _buffer[_pos + 7] = pi[7];
+            BinaryPrimitives.WriteInt64LittleEndian(new Span<byte>(_buffer, _pos, 8), value);
 
             _pos += 8;
         }
 
         public void Write(Single value)
         {
-            var pi = BitConverter.GetBytes(value);
-
-            _buffer[_pos + 0] = pi[0];
-            _buffer[_pos + 1] = pi[1];
-            _buffer[_pos + 2] = pi[2];
-            _buffer[_pos + 3] = pi[3];
+            BitConverter.TryWriteBytes(new Span<byte>(_buffer, _pos, 4), value);
 
             _pos += 4;
         }
 
         public void Write(Double value)
         {
-            var pi = BitConverter.GetBytes(value);
-
-            _buffer[_pos + 0] = pi[0];
-            _buffer[_pos + 1] = pi[1];
-            _buffer[_pos + 2] = pi[2];
-            _buffer[_pos + 3] = pi[3];
-            _buffer[_pos + 4] = pi[4];
-            _buffer[_pos + 5] = pi[5];
-            _buffer[_pos + 6] = pi[6];
-            _buffer[_pos + 7] = pi[7];
+            BitConverter.TryWriteBytes(new Span<byte>(_buffer, _pos, 8), value);
 
             _pos += 8;
         }

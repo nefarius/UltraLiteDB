@@ -6,10 +6,10 @@
 
   <PropertyGroup>
     <PackageId>UltraLiteDB</PackageId>
-    <Version>1.4.9</Version>
-    <AssemblyVersion>1.4.9.0</AssemblyVersion>
-    <FileVersion>1.4.9</FileVersion>
-    <VersionPrefix>1.4.9</VersionPrefix>
+    <Version>1.5.0</Version>
+    <AssemblyVersion>1.5.0.0</AssemblyVersion>
+    <FileVersion>1.5.0</FileVersion>
+    <VersionPrefix>1.5.0</VersionPrefix>
     <Authors>Maurício David, Jeremy Friesen</Authors>
     <Product>UltraLiteDB</Product>
     <Description>UltraLiteDB - An ultra-lightweight embedded .NET NoSQL document store in a single datafile</Description>
