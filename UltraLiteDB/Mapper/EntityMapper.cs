@@ -36,12 +36,13 @@ namespace UltraLiteDB
             {
                 if (_fieldLookup == null)
                 {
-                    _fieldLookup = new Dictionary<string, MemberMapper>(StringComparer.OrdinalIgnoreCase);
+                    var lookup = new Dictionary<string, MemberMapper>(StringComparer.OrdinalIgnoreCase);
                     foreach (var m in Members)
                     {
                         if (m.FieldName != null)
-                            _fieldLookup[m.FieldName] = m;
+                            lookup[m.FieldName] = m;
                     }
+                    _fieldLookup = lookup;
                 }
                 return _fieldLookup;
             }

@@ -15,12 +15,10 @@ namespace UltraLiteDB
         /// </summary>
         private Dictionary<uint, BasePage> _dirty = new Dictionary<uint, BasePage>();
 
-        private IDiskService _disk;
         private Logger _log;
 
-        public CacheService(IDiskService disk, Logger log)
+        public CacheService(Logger log)
         {
-            _disk = disk;
             _log = log;
         }
 
@@ -31,11 +29,13 @@ namespace UltraLiteDB
         public BasePage GetPage(uint pageID)
         {
             // try get page from dirty cache or from clean list
-            var page =
-                _dirty.GetOrDefault(pageID) ??
-                _clean.GetOrDefault(pageID);
-
-            return page;
+            lock(this)
+            {
+                var page =
+                    _dirty.GetOrDefault(pageID) ??
+                    _clean.GetOrDefault(pageID);
+                return page;
+            }
         }
 
         /// <summary>
@@ -46,7 +46,10 @@ namespace UltraLiteDB
         {
             if (page.IsDirty) throw new NotSupportedException("Page can't be dirty");
 
-            _clean[page.PageID] = page;
+            lock(this)
+            {
+                _clean[page.PageID] = page;
+            }
         }
 
         /// <summary>
@@ -57,9 +60,12 @@ namespace UltraLiteDB
         /// </summary>
         public void SetDirty(BasePage page)
         {
-            _clean.Remove(page.PageID);
-            page.IsDirty = true;
-            _dirty[page.PageID] = page;
+            lock(this)
+            {
+                _clean.Remove(page.PageID);
+                page.IsDirty = true;
+                _dirty[page.PageID] = page;
+            }
         }
 
         /// <summary>
@@ -89,7 +95,10 @@ namespace UltraLiteDB
         {
             _log.Write(Logger.CACHE, "clearing dirty pages from cache");
 
-            _dirty.Clear();
+            lock(this)
+            {
+                _dirty.Clear();
+            }
         }
 
         /// <summary>
@@ -98,13 +107,16 @@ namespace UltraLiteDB
         /// </summary>
         public void MarkDirtyAsClean()
         {
-            foreach(var p in _dirty)
+            lock(this)
             {
-                p.Value.IsDirty = false;
-                _clean[p.Key] = p.Value;
-            }
+                foreach(var p in _dirty)
+                {
+                    p.Value.IsDirty = false;
+                    _clean[p.Key] = p.Value;
+                }
 
-            _dirty.Clear();
+                _dirty.Clear();
+            }
         }
 
         /// <summary>
@@ -113,7 +125,7 @@ namespace UltraLiteDB
         /// </summary>
         public void ClearPages()
         {
-            lock(_clean)
+            lock(this)
             {
                 _log.Write(Logger.CACHE, "cleaning cache");
                 _clean.Clear();

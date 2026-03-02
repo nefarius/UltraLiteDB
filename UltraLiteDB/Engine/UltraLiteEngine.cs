@@ -141,7 +141,7 @@ namespace UltraLiteDB
         /// </summary>
         private void InitializeServices()
         {
-            _cache = new CacheService(_disk, _log);
+            _cache = new CacheService(_log);
             _pager = new PageService(_disk, _crypto, _cache, _log);
             _indexer = new IndexService(_pager, _log);
             _data = new DataService(_pager, _log);

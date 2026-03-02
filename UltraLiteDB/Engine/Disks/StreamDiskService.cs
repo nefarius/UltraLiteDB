@@ -65,14 +65,17 @@ namespace UltraLiteDB
             var buffer = new byte[BasePage.PAGE_SIZE];
             var position = BasePage.GetSizeOfPages(pageID);
 
-            // position cursor
-            if (_stream.Position != position)
+            lock (_stream)
             {
-                _stream.Seek(position, SeekOrigin.Begin);
-            }
+                // position cursor
+                if (_stream.Position != position)
+                {
+                    _stream.Seek(position, SeekOrigin.Begin);
+                }
 
-            // read bytes from data file
-            _stream.Read(buffer, 0, BasePage.PAGE_SIZE);
+                // read bytes from data file
+                _stream.Read(buffer, 0, BasePage.PAGE_SIZE);
+            }
 
             _log.Write(Logger.DISK, "read page #{0:0000} :: {1}", pageID, (PageType)buffer[PAGE_TYPE_POSITION]);
 
@@ -88,13 +91,16 @@ namespace UltraLiteDB
 
             _log.Write(Logger.DISK, "write page #{0:0000} :: {1}", pageID, (PageType)buffer[PAGE_TYPE_POSITION]);
 
-            // position cursor
-            if (_stream.Position != position)
+            lock (_stream)
             {
-                _stream.Seek(position, SeekOrigin.Begin);
-            }
+                // position cursor
+                if (_stream.Position != position)
+                {
+                    _stream.Seek(position, SeekOrigin.Begin);
+                }
 
-            _stream.Write(buffer, 0, BasePage.PAGE_SIZE);
+                _stream.Write(buffer, 0, BasePage.PAGE_SIZE);
+            }
         }
 
         /// <summary>
@@ -102,8 +108,11 @@ namespace UltraLiteDB
         /// </summary>
         public void SetLength(long fileSize)
         {
-            // fileSize parameter tell me final size of data file - helpful to extend first datafile
-            _stream.SetLength(fileSize);
+            lock (_stream)
+            {
+                // fileSize parameter tell me final size of data file - helpful to extend first datafile
+                _stream.SetLength(fileSize);
+            }
         }
 
         /// <summary>

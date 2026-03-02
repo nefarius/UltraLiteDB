@@ -118,13 +118,16 @@ namespace UltraLiteDB
 
             _log.Write(Logger.DISK, "write page #{0:0000} :: {1}", pageID, (PageType)buffer[PAGE_TYPE_POSITION]);
 
-            // position cursor
-            if (_stream.Position != position)
+            lock (_stream)
             {
-                _stream.Seek(position, SeekOrigin.Begin);
-            }
+                // position cursor
+                if (_stream.Position != position)
+                {
+                    _stream.Seek(position, SeekOrigin.Begin);
+                }
 
-            _stream.Write(buffer, 0, BasePage.PAGE_SIZE);
+                _stream.Write(buffer, 0, BasePage.PAGE_SIZE);
+            }
         }
 
         /// <summary>
@@ -135,8 +138,11 @@ namespace UltraLiteDB
             // checks if new fileSize will exceed limit size
             if (fileSize > _options.LimitSize) throw UltraLiteException.FileSizeExceeded(_options.LimitSize);
 
-            // fileSize parameter tell me final size of data file - helpful to extend first datafile
-            _stream.SetLength(fileSize);
+            lock (_stream)
+            {
+                // fileSize parameter tell me final size of data file - helpful to extend first datafile
+                _stream.SetLength(fileSize);
+            }
         }
 
         /// <summary>
@@ -166,28 +172,31 @@ namespace UltraLiteDB
 
             _log.Write(Logger.JOURNAL, "extend datafile to journal - {0} pages", pages.Count);
 
-            // set journal file length before write
-            _stream.SetLength(size);
-
-            // go to initial file position (after lastPageID)
-            _stream.Seek(BasePage.GetSizeOfPages(lastPageID + 1), SeekOrigin.Begin);
-
-            foreach(var buffer in pages)
+            lock (_stream)
             {
-                // read pageID and pageType from buffer
-                var pageID = BitConverter.ToUInt32(buffer, 0);
-                var pageType = (PageType)buffer[PAGE_TYPE_POSITION];
+                // set journal file length before write
+                _stream.SetLength(size);
 
-                _log.Write(Logger.JOURNAL, "write page #{0:0000} :: {1}", pageID, pageType);
+                // go to initial file position (after lastPageID)
+                _stream.Seek(BasePage.GetSizeOfPages(lastPageID + 1), SeekOrigin.Begin);
 
-                // write page bytes
-                _stream.Write(buffer, 0, BasePage.PAGE_SIZE);
+                foreach(var buffer in pages)
+                {
+                    // read pageID and pageType from buffer
+                    var pageID = BitConverter.ToUInt32(buffer, 0);
+                    var pageType = (PageType)buffer[PAGE_TYPE_POSITION];
+
+                    _log.Write(Logger.JOURNAL, "write page #{0:0000} :: {1}", pageID, pageType);
+
+                    // write page bytes
+                    _stream.Write(buffer, 0, BasePage.PAGE_SIZE);
+                }
+
+                _log.Write(Logger.JOURNAL, "flush journal to disk");
+
+                // ensure all data are persisted in disk
+                this.Flush();
             }
-
-            _log.Write(Logger.JOURNAL, "flush journal to disk");
-
-            // ensure all data are persisted in disk
-            this.Flush();
         }
 
         /// <summary>
@@ -198,21 +207,24 @@ namespace UltraLiteDB
             // position stream at begin journal area
             var pos = BasePage.GetSizeOfPages(lastPageID + 1);
 
-            _stream.Seek(pos, SeekOrigin.Begin);
-
-            var buffer = new byte[BasePage.PAGE_SIZE];
-
-            while (_stream.Position < _stream.Length)
+            lock (_stream)
             {
-                // read page bytes from journal file
-                _stream.Read(buffer, 0, BasePage.PAGE_SIZE);
-
-                yield return buffer;
-
-                // now set position to next journal page
-                pos += BasePage.PAGE_SIZE;
-
                 _stream.Seek(pos, SeekOrigin.Begin);
+
+                var buffer = new byte[BasePage.PAGE_SIZE];
+
+                while (_stream.Position < _stream.Length)
+                {
+                    // read page bytes from journal file
+                    _stream.Read(buffer, 0, BasePage.PAGE_SIZE);
+
+                    yield return buffer;
+
+                    // now set position to next journal page
+                    pos += BasePage.PAGE_SIZE;
+
+                    _stream.Seek(pos, SeekOrigin.Begin);
+                }
             }
         }
 
