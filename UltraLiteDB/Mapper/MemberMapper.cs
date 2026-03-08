@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 
 namespace UltraLiteDB
 {
@@ -49,10 +50,10 @@ namespace UltraLiteDB
         /// </summary>
         public Func<BsonValue, BsonMapper, object> Deserialize { get; set; }
 
-        /// <summary>
-        /// Whether this member's type implements <see cref="IEnumerable"/> (arrays, lists, collections).
-        /// </summary>
-        public bool IsList { get; set; }
+		/// <summary>
+		/// Whether this member's type implements <see cref="IEnumerable"/> (arrays, lists, collections).
+		/// </summary>
+		public bool IsList { get; set; }
 
         /// <summary>
         /// For collection types, the element type (e.g. typeof(int) for List&lt;int&gt;). For non-collection types, same as <see cref="DataType"/>.
