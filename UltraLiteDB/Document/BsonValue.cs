@@ -44,6 +44,8 @@ namespace UltraLiteDB
         /// </summary>
         internal virtual object RawValue { get; }
 
+        public object? AsRawValue { get => RawValue; }
+
         #region Constructor
 
         public BsonValue()
