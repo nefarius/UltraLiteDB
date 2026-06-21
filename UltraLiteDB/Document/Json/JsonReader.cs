@@ -7,6 +7,35 @@ using System.IO;
 namespace UltraLiteDB
 {
     /// <summary>
+    /// A single member of a JSON object as produced by <see cref="JsonReader.DeserializeMembers"/>:
+    /// the key, its value, and the source line/column where the key begins. Unlike a parsed
+    /// <see cref="BsonDocument"/>, members are reported in source order and duplicates are not merged,
+    /// so callers can detect and locate repeated keys.
+    /// </summary>
+    public readonly struct JsonMember
+    {
+        public JsonMember(string key, BsonValue value, int line, int column)
+        {
+            this.Key = key;
+            this.Value = value;
+            this.Line = line;
+            this.Column = column;
+        }
+
+        /// <summary>The member key.</summary>
+        public string Key { get; }
+
+        /// <summary>The member value.</summary>
+        public BsonValue Value { get; }
+
+        /// <summary>1-based source line where the key token starts.</summary>
+        public int Line { get; }
+
+        /// <summary>1-based source column where the key token starts.</summary>
+        public int Column { get; }
+    }
+
+    /// <summary>
     /// Reads and deserializes JSON text into <see cref="BsonValue"/> instances using a
     /// <see cref="Tokenizer"/>-based parser (no regular expressions). Supports JSON extended
     /// data types such as <c>$oid</c>, <c>$date</c>, <c>$guid</c>, <c>$binary</c>,
@@ -91,6 +120,52 @@ namespace UltraLiteDB
             token.Expect(TokenType.CloseBracket);
 
             yield break;
+        }
+
+        /// <summary>
+        /// Deserializes a JSON object from the input, yielding each member lazily as a
+        /// <see cref="JsonMember"/> in source order. Unlike <see cref="Deserialize"/> (which builds a
+        /// <see cref="BsonDocument"/> and merges duplicate keys), this yields every member — including
+        /// duplicates — each tagged with the source line/column of its key, enabling duplicate-key
+        /// detection and precise error reporting. Expects the input to start with an opening brace
+        /// (<c>{</c>); an empty input yields no members.
+        /// </summary>
+        /// <returns>An <see cref="IEnumerable{JsonMember}"/> of the object's members.</returns>
+        /// <exception cref="UltraLiteException">Thrown when the JSON is malformed.</exception>
+        public IEnumerable<JsonMember> DeserializeMembers()
+        {
+            var token = _tokenizer.ReadToken();
+
+            if (token.Type == TokenType.EOF) yield break;
+
+            token.Expect(TokenType.OpenBrace);
+
+            token = _tokenizer.ReadToken(); // read "<key>" or "}"
+
+            while (token.Type != TokenType.CloseBrace)
+            {
+                token.Expect(TokenType.String, TokenType.Word);
+
+                // Expect(String, Word) guarantees a value-bearing token
+                var key = token.Value!;
+                var keyLine = token.Line;
+                var keyColumn = token.Column;
+
+                token = _tokenizer.ReadToken(); // read ":"
+
+                token.Expect(TokenType.Colon);
+
+                token = _tokenizer.ReadToken(); // read "<value>"
+
+                yield return new JsonMember(key, this.ReadValue(token), keyLine, keyColumn);
+
+                token = _tokenizer.ReadToken(); // read "," or "}"
+
+                if (token.Type == TokenType.Comma)
+                {
+                    token = _tokenizer.ReadToken(); // read "<key>"
+                }
+            }
         }
 
         /// <summary>

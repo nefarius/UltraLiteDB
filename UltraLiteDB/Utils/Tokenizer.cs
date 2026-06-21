@@ -100,16 +100,24 @@ namespace UltraLiteDB
             "OR"
         };
 
-        public Token(TokenType tokenType, string? value, long position)
+        public Token(TokenType tokenType, string? value, long position, int line = 0, int column = 0)
         {
             this.Position = position;
             this.Value = value;
             this.Type = tokenType;
+            this.Line = line;
+            this.Column = column;
         }
 
         public TokenType Type { get; private set; }
         public string? Value { get; private set; }
         public long Position { get; private set; }
+
+        /// <summary>1-based source line where this token starts (0 if not tracked).</summary>
+        public int Line { get; private set; }
+
+        /// <summary>1-based source column where this token starts (0 if not tracked).</summary>
+        public int Column { get; private set; }
 
         /// <summary>
         /// Expect if token is type (if not, throw UnexpectedToken)
@@ -211,9 +219,18 @@ namespace UltraLiteDB
         private char _char = '\0';
         private Token? _ahead = null;
         private bool _eof = false;
+        private int _line = 1;
+        private int _col = 0;
 
         public bool EOF => _eof && _ahead == null;
         public long Position { get; private set; }
+
+        /// <summary>1-based line of the current character.</summary>
+        public int Line => _line;
+
+        /// <summary>1-based column of the current character.</summary>
+        public int Column => _col;
+
         public Token? Current { get; private set; }
 
         /// <summary>
@@ -258,6 +275,16 @@ namespace UltraLiteDB
         private char ReadChar()
         {
             if (_eof) return '\0';
+
+            // advance line/column based on the character we are leaving behind, so _line/_col
+            // always describe the new _char. (\n ends a line; \r merely advances the column,
+            // which keeps both \n and \r\n endings correct.)
+            if (_char == '\n')
+            {
+                _line++;
+                _col = 0;
+            }
+            _col++;
 
             var c = _reader.Read();
 
@@ -324,80 +351,84 @@ namespace UltraLiteDB
 
             if (_eof)
             {
-                return new Token(TokenType.EOF, null, this.Position);
+                return new Token(TokenType.EOF, null, this.Position, _line, _col);
             }
+
+            // snapshot where this token starts (after whitespace) so every token carries its
+            // own start line/column, regardless of how many chars it consumes below
+            int startLine = _line, startCol = _col;
 
             Token? token = null;
 
             switch (_char)
             {
                 case '{':
-                    token = new Token(TokenType.OpenBrace, "{", this.Position);
+                    token = new Token(TokenType.OpenBrace, "{", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
                 case '}':
-                    token = new Token(TokenType.CloseBrace, "}", this.Position);
+                    token = new Token(TokenType.CloseBrace, "}", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
                 case '[':
-                    token = new Token(TokenType.OpenBracket, "[", this.Position);
+                    token = new Token(TokenType.OpenBracket, "[", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
                 case ']':
-                    token = new Token(TokenType.CloseBracket, "]", this.Position);
+                    token = new Token(TokenType.CloseBracket, "]", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
                 case '(':
-                    token = new Token(TokenType.OpenParenthesis, "(", this.Position);
+                    token = new Token(TokenType.OpenParenthesis, "(", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
                 case ')':
-                    token = new Token(TokenType.CloseParenthesis, ")", this.Position);
+                    token = new Token(TokenType.CloseParenthesis, ")", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
                 case ',':
-                    token = new Token(TokenType.Comma, ",", this.Position);
+                    token = new Token(TokenType.Comma, ",", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
                 case ':':
-                    token = new Token(TokenType.Colon, ":", this.Position);
+                    token = new Token(TokenType.Colon, ":", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
                 case ';':
-                    token = new Token(TokenType.SemiColon, ";", this.Position);
+                    token = new Token(TokenType.SemiColon, ";", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
                 case '@':
-                    token = new Token(TokenType.At, "@", this.Position);
+                    token = new Token(TokenType.At, "@", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
                 case '#':
-                    token = new Token(TokenType.Hashtag, "#", this.Position);
+                    token = new Token(TokenType.Hashtag, "#", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
                 case '~':
-                    token = new Token(TokenType.Til, "~", this.Position);
+                    token = new Token(TokenType.Til, "~", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
                 case '.':
-                    token = new Token(TokenType.Period, ".", this.Position);
+                    token = new Token(TokenType.Period, ".", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
                 case '&':
-                    token = new Token(TokenType.Ampersand, "&", this.Position);
+                    token = new Token(TokenType.Ampersand, "&", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
@@ -405,11 +436,11 @@ namespace UltraLiteDB
                     this.ReadChar();
                     if (IsWordChar(_char, true))
                     {
-                        token = new Token(TokenType.Word, "$" + this.ReadWord(), this.Position);
+                        token = new Token(TokenType.Word, "$" + this.ReadWord(), this.Position, startLine, startCol);
                     }
                     else
                     {
-                        token = new Token(TokenType.Dollar, "$", this.Position);
+                        token = new Token(TokenType.Dollar, "$", this.Position, startLine, startCol);
                     }
                     break;
 
@@ -417,17 +448,17 @@ namespace UltraLiteDB
                     this.ReadChar();
                     if (_char == '=')
                     {
-                        token = new Token(TokenType.NotEquals, "!=", this.Position);
+                        token = new Token(TokenType.NotEquals, "!=", this.Position, startLine, startCol);
                         this.ReadChar();
                     }
                     else
                     {
-                        token = new Token(TokenType.Exclamation, "!", this.Position);
+                        token = new Token(TokenType.Exclamation, "!", this.Position, startLine, startCol);
                     }
                     break;
 
                 case '=':
-                    token = new Token(TokenType.Equals, "=", this.Position);
+                    token = new Token(TokenType.Equals, "=", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
@@ -435,12 +466,12 @@ namespace UltraLiteDB
                     this.ReadChar();
                     if (_char == '=')
                     {
-                        token = new Token(TokenType.GreaterOrEquals, ">=", this.Position);
+                        token = new Token(TokenType.GreaterOrEquals, ">=", this.Position, startLine, startCol);
                         this.ReadChar();
                     }
                     else
                     {
-                        token = new Token(TokenType.Greater, ">", this.Position);
+                        token = new Token(TokenType.Greater, ">", this.Position, startLine, startCol);
                     }
                     break;
 
@@ -448,12 +479,12 @@ namespace UltraLiteDB
                     this.ReadChar();
                     if (_char == '=')
                     {
-                        token = new Token(TokenType.LessOrEquals, "<=", this.Position);
+                        token = new Token(TokenType.LessOrEquals, "<=", this.Position, startLine, startCol);
                         this.ReadChar();
                     }
                     else
                     {
-                        token = new Token(TokenType.Less, "<", this.Position);
+                        token = new Token(TokenType.Less, "<", this.Position, startLine, startCol);
                     }
                     break;
 
@@ -466,37 +497,37 @@ namespace UltraLiteDB
                     }
                     else
                     {
-                        token = new Token(TokenType.Minus, "-", this.Position);
+                        token = new Token(TokenType.Minus, "-", this.Position, startLine, startCol);
                     }
                     break;
 
                 case '+':
-                    token = new Token(TokenType.Plus, "+", this.Position);
+                    token = new Token(TokenType.Plus, "+", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
                 case '*':
-                    token = new Token(TokenType.Asterisk, "*", this.Position);
+                    token = new Token(TokenType.Asterisk, "*", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
                 case '/':
-                    token = new Token(TokenType.Slash, "/", this.Position);
+                    token = new Token(TokenType.Slash, "/", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
                 case '\\':
-                    token = new Token(TokenType.Backslash, @"\", this.Position);
+                    token = new Token(TokenType.Backslash, @"\", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
                 case '%':
-                    token = new Token(TokenType.Percent, "%", this.Position);
+                    token = new Token(TokenType.Percent, "%", this.Position, startLine, startCol);
                     this.ReadChar();
                     break;
 
                 case '\"':
                 case '\'':
-                    token = new Token(TokenType.String, this.ReadString(_char), this.Position);
+                    token = new Token(TokenType.String, this.ReadString(_char), this.Position, startLine, startCol);
                     break;
 
                 case '0':
@@ -511,7 +542,7 @@ namespace UltraLiteDB
                 case '9':
                     var dbl = false;
                     var number = this.ReadNumber(ref dbl);
-                    token = new Token(dbl ? TokenType.Double : TokenType.Int, number, this.Position);
+                    token = new Token(dbl ? TokenType.Double : TokenType.Int, number, this.Position, startLine, startCol);
                     break;
 
                 case ' ':
@@ -524,14 +555,14 @@ namespace UltraLiteDB
                         sb.Append(_char);
                         this.ReadChar();
                     }
-                    token = new Token(TokenType.Whitespace, sb.ToString(), this.Position);
+                    token = new Token(TokenType.Whitespace, sb.ToString(), this.Position, startLine, startCol);
                     break;
 
                 default:
-                    // test if first char is an word 
+                    // test if first char is an word
                     if (IsWordChar(_char, true))
                     {
-                        token = new Token(TokenType.Word, this.ReadWord(), this.Position);
+                        token = new Token(TokenType.Word, this.ReadWord(), this.Position, startLine, startCol);
                     }
                     else
                     {
@@ -540,7 +571,7 @@ namespace UltraLiteDB
                     break;
             }
 
-            return token ?? new Token(TokenType.Unknown, _char.ToString(), this.Position);
+            return token ?? new Token(TokenType.Unknown, _char.ToString(), this.Position, startLine, startCol);
         }
 
         /// <summary>

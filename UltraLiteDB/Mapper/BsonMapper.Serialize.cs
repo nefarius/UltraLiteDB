@@ -33,6 +33,21 @@ namespace UltraLiteDB
             return this.ToDocument(typeof(T), entity);
         }
 
+
+        /// <summary>
+        /// Recursively serializes a .NET object to a <see cref="BsonValue"/>. Handles primitive types, custom serializers,
+        /// dictionaries, collections, and complex objects.
+        /// </summary>
+        public BsonValue ToBsonValue(object? obj)
+        {
+            if (obj == null)
+            {
+                return BsonValue.Null;
+            }
+
+            return this.Serialize(obj.GetType(), obj, 0);
+        }
+
         /// <summary>
         /// Recursively serializes a .NET object to a <see cref="BsonValue"/>. Handles primitive types, custom serializers,
         /// dictionaries, collections, and complex objects. Tracks depth to prevent infinite recursion.

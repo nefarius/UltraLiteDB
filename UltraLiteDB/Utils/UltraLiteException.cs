@@ -45,6 +45,12 @@ namespace UltraLiteDB
         public string? Line { get; private set; }
         public long Position { get; private set; }
 
+        /// <summary>1-based source line of the offending token (JSON parse errors), if known.</summary>
+        public int? SourceLine { get; private set; }
+
+        /// <summary>1-based source column of the offending token (JSON parse errors), if known.</summary>
+        public int? SourceColumn { get; private set; }
+
         public UltraLiteException(string message)
             : base(message)
         {
@@ -52,6 +58,16 @@ namespace UltraLiteDB
 
         internal UltraLiteException(int code, string message, params object[] args)
             : base(string.Format(message, args))
+        {
+            this.ErrorCode = code;
+        }
+
+        // Non-formatting overload: takes an already-final message verbatim. Overload resolution
+        // prefers this (normal form) over the params ctor (expanded form) for no-arg calls, so
+        // pre-interpolated messages containing literal '{'/'}' (e.g. an unexpected brace token)
+        // are not re-parsed by string.Format.
+        internal UltraLiteException(int code, string message)
+            : base(message)
         {
             this.ErrorCode = code;
         }
@@ -150,10 +166,15 @@ namespace UltraLiteDB
             var position = (token?.Position - (token?.Value?.Length ?? 0)) ?? 0;
             var str = token?.Type == TokenType.EOF ? "[EOF]" : token?.Value ?? "";
             var exp = expected == null ? "" : $" Expected `{expected}`.";
+            var line = token?.Line ?? 0;
+            var column = token?.Column ?? 0;
+            var where = line > 0 ? $" at line {line} col {column}" : $" in position {position}";
 
-            return new UltraLiteException(UNEXPECTED_TOKEN, $"Unexpected token `{str}` in position {position}.{exp}")
+            return new UltraLiteException(UNEXPECTED_TOKEN, $"Unexpected token `{str}`{where}.{exp}")
             {
-                Position = position
+                Position = position,
+                SourceLine = line > 0 ? line : (int?)null,
+                SourceColumn = line > 0 ? column : (int?)null
             };
         }
 
