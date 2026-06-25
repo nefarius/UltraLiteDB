@@ -1,239 +1,239 @@
-﻿using System;
+using System;
 
 namespace UltraLiteDB
 {
-    /// <summary>
-    /// Identifies the type of content stored in a <see cref="BasePage"/>.
-    /// </summary>
-    public enum PageType { Empty = 0, Header = 1, Collection = 2, Index = 3, Data = 4, Extend = 5 }
+	/// <summary>
+	/// Identifies the type of content stored in a <see cref="BasePage"/>.
+	/// </summary>
+	public enum PageType { Empty = 0, Header = 1, Collection = 2, Index = 3, Data = 4, Extend = 5 }
 
-    /// <summary>
-    /// Base class for all page types in the database file. Each page is a fixed-size block
-    /// (<see cref="PAGE_SIZE"/> bytes) that stores a common header and type-specific content.
-    /// Pages are linked via <see cref="PrevPageID"/>/<see cref="NextPageID"/> to form sequences.
-    /// </summary>
-    internal abstract class BasePage
-    {
-        #region Page Constants
+	/// <summary>
+	/// Base class for all page types in the database file. Each page is a fixed-size block
+	/// (<see cref="PAGE_SIZE"/> bytes) that stores a common header and type-specific content.
+	/// Pages are linked via <see cref="PrevPageID"/>/<see cref="NextPageID"/> to form sequences.
+	/// </summary>
+	internal abstract class BasePage
+	{
+		#region Page Constants
 
-        /// <summary>
-        /// The size of each page in disk - 4096 is NTFS default
-        /// </summary>
-        public const int PAGE_SIZE = 4096;
+		/// <summary>
+		/// The size of each page in disk - 4096 is NTFS default
+		/// </summary>
+		public const int PAGE_SIZE = 4096;
 
-        /// <summary>
-        /// This size is used bytes in header pages 17 bytes (+8 reserved to future use) = 25 bytes
-        /// </summary>
-        public const int PAGE_HEADER_SIZE = 25;
+		/// <summary>
+		/// This size is used bytes in header pages 17 bytes (+8 reserved to future use) = 25 bytes
+		/// </summary>
+		public const int PAGE_HEADER_SIZE = 25;
 
-        /// <summary>
-        /// Bytes available to store data removing page header size - 4071 bytes
-        /// </summary>
-        public const int PAGE_AVAILABLE_BYTES = PAGE_SIZE - PAGE_HEADER_SIZE;
+		/// <summary>
+		/// Bytes available to store data removing page header size - 4071 bytes
+		/// </summary>
+		public const int PAGE_AVAILABLE_BYTES = PAGE_SIZE - PAGE_HEADER_SIZE;
 
-        #endregion
+		#endregion
 
-        /// <summary>
-        /// Represent page number - start in 0 with HeaderPage [4 bytes]
-        /// </summary>
-        public uint PageID { get; set; }
+		/// <summary>
+		/// Represent page number - start in 0 with HeaderPage [4 bytes]
+		/// </summary>
+		public uint PageID { get; set; }
 
-        /// <summary>
-        /// Indicate the page type [1 byte] - Must be implemented for each page type
-        /// </summary>
-        public abstract PageType PageType { get; }
+		/// <summary>
+		/// Indicate the page type [1 byte] - Must be implemented for each page type
+		/// </summary>
+		public abstract PageType PageType { get; }
 
-        /// <summary>
-        /// Represent the previous page. Used for page-sequences - MaxValue represent that has NO previous page [4 bytes]
-        /// </summary>
-        public uint PrevPageID { get; set; }
+		/// <summary>
+		/// Represent the previous page. Used for page-sequences - MaxValue represent that has NO previous page [4 bytes]
+		/// </summary>
+		public uint PrevPageID { get; set; }
 
-        /// <summary>
-        /// Represent the next page. Used for page-sequences - MaxValue represent that has NO next page [4 bytes]
-        /// </summary>
-        public uint NextPageID { get; set; }
+		/// <summary>
+		/// Represent the next page. Used for page-sequences - MaxValue represent that has NO next page [4 bytes]
+		/// </summary>
+		public uint NextPageID { get; set; }
 
-        /// <summary>
-        /// Used for all pages to count items inside this page(bytes, nodes, blocks, ...) [2 bytes]
-        /// Its Int32 but writes in UInt16
-        /// </summary>
-        public int ItemCount { get; set; }
+		/// <summary>
+		/// Used for all pages to count items inside this page(bytes, nodes, blocks, ...) [2 bytes]
+		/// Its Int32 but writes in UInt16
+		/// </summary>
+		public int ItemCount { get; set; }
 
-        /// <summary>
-        /// Used to find a free page using only header search [used in FreeList] [2 bytes]
-        /// Its Int32 but writes in UInt16
-        /// Its updated when a page modify content length (add/remove items)
-        /// </summary>
-        public int FreeBytes { get; set; }
+		/// <summary>
+		/// Used to find a free page using only header search [used in FreeList] [2 bytes]
+		/// Its Int32 but writes in UInt16
+		/// Its updated when a page modify content length (add/remove items)
+		/// </summary>
+		public int FreeBytes { get; set; }
 
-        /// <summary>
-        /// Indicate that this page is dirty (was modified) and must persist when committed [not-persistable]
-        /// </summary>
-        public bool IsDirty { get; set; }
+		/// <summary>
+		/// Indicate that this page is dirty (was modified) and must persist when committed [not-persistable]
+		/// </summary>
+		public bool IsDirty { get; set; }
 
-        /// <summary>
-        /// This is the data when read first from disk - used to journal operations (IDiskService only will use)
-        /// </summary>
-        public byte[] DiskData { get; set; }
+		/// <summary>
+		/// This is the data when read first from disk - used to journal operations (IDiskService only will use)
+		/// </summary>
+		public byte[] DiskData { get; set; }
 
-        /// <summary>
-        /// Initializes a new page with default empty state.
-        /// </summary>
-        /// <param name="pageID">The unique page identifier.</param>
-        public BasePage(uint pageID)
-        {
-            this.PageID = pageID;
-            this.PrevPageID = uint.MaxValue;
-            this.NextPageID = uint.MaxValue;
-            this.ItemCount = 0;
-            this.FreeBytes = PAGE_AVAILABLE_BYTES;
-            this.DiskData = new byte[0];
-        }
+		/// <summary>
+		/// Initializes a new page with default empty state.
+		/// </summary>
+		/// <param name="pageID">The unique page identifier.</param>
+		public BasePage(uint pageID)
+		{
+			this.PageID = pageID;
+			this.PrevPageID = uint.MaxValue;
+			this.NextPageID = uint.MaxValue;
+			this.ItemCount = 0;
+			this.FreeBytes = PAGE_AVAILABLE_BYTES;
+			this.DiskData = new byte[0];
+		}
 
-        /// <summary>
-        /// Returns the total byte size for the specified number of pages.
-        /// </summary>
-        /// <param name="pageCount">The number of pages.</param>
-        /// <returns>Total size in bytes.</returns>
-        public static long GetSizeOfPages(uint pageCount)
-        {
-            return checked((long)pageCount * BasePage.PAGE_SIZE);
-        }
+		/// <summary>
+		/// Returns the total byte size for the specified number of pages.
+		/// </summary>
+		/// <param name="pageCount">The number of pages.</param>
+		/// <returns>Total size in bytes.</returns>
+		public static long GetSizeOfPages(uint pageCount)
+		{
+			return checked((long)pageCount * BasePage.PAGE_SIZE);
+		}
 
-        /// <summary>
-        /// Returns the total byte size for the specified number of pages.
-        /// </summary>
-        /// <param name="pageCount">The number of pages. Must be non-negative.</param>
-        /// <returns>Total size in bytes.</returns>
-        public static long GetSizeOfPages(int pageCount)
-        {
-            if (pageCount < 0) throw new ArgumentOutOfRangeException("pageCount", "Could not be less than 0.");
+		/// <summary>
+		/// Returns the total byte size for the specified number of pages.
+		/// </summary>
+		/// <param name="pageCount">The number of pages. Must be non-negative.</param>
+		/// <returns>Total size in bytes.</returns>
+		public static long GetSizeOfPages(int pageCount)
+		{
+			if (pageCount < 0) throw new ArgumentOutOfRangeException("pageCount", "Could not be less than 0.");
 
-            return BasePage.GetSizeOfPages((uint)pageCount);
-        }
+			return BasePage.GetSizeOfPages((uint)pageCount);
+		}
 
-        #region Read/Write page
+		#region Read/Write page
 
-        /// <summary>
-        /// Create a new empty page instance based on the generic page type <typeparamref name="T"/>.
-        /// </summary>
-        /// <typeparam name="T">The concrete page type to create.</typeparam>
-        /// <param name="pageID">The page identifier to assign.</param>
-        /// <returns>A new instance of the specified page type.</returns>
-        public static T CreateInstance<T>(uint pageID)
-            where T : BasePage
-        {
-            var type = typeof(T);
+		/// <summary>
+		/// Create a new empty page instance based on the generic page type <typeparamref name="T"/>.
+		/// </summary>
+		/// <typeparam name="T">The concrete page type to create.</typeparam>
+		/// <param name="pageID">The page identifier to assign.</param>
+		/// <returns>A new instance of the specified page type.</returns>
+		public static T CreateInstance<T>(uint pageID)
+			where T : BasePage
+		{
+			var type = typeof(T);
 
-            // each branch is guarded by the matching type check, so the cast always succeeds;
-            // (T)(object) forces it (throws on a real mismatch) instead of "as T" silently returning null
-            if (type == typeof(HeaderPage)) return (T)(object)new HeaderPage();
-            if (type == typeof(CollectionPage)) return (T)(object)new CollectionPage(pageID);
-            if (type == typeof(IndexPage)) return (T)(object)new IndexPage(pageID);
-            if (type == typeof(DataPage)) return (T)(object)new DataPage(pageID);
-            if (type == typeof(ExtendPage)) return (T)(object)new ExtendPage(pageID);
-            if (type == typeof(EmptyPage)) return (T)(object)new EmptyPage(pageID);
+			// each branch is guarded by the matching type check, so the cast always succeeds;
+			// (T)(object) forces it (throws on a real mismatch) instead of "as T" silently returning null
+			if (type == typeof(HeaderPage)) return (T)(object)new HeaderPage();
+			if (type == typeof(CollectionPage)) return (T)(object)new CollectionPage(pageID);
+			if (type == typeof(IndexPage)) return (T)(object)new IndexPage(pageID);
+			if (type == typeof(DataPage)) return (T)(object)new DataPage(pageID);
+			if (type == typeof(ExtendPage)) return (T)(object)new ExtendPage(pageID);
+			if (type == typeof(EmptyPage)) return (T)(object)new EmptyPage(pageID);
 
-            throw new Exception("Invalid base page type T");
-        }
+			throw new Exception("Invalid base page type T");
+		}
 
-        /// <summary>
-        /// Create a new empty page instance based on the specified <see cref="PageType"/>.
-        /// </summary>
-        /// <param name="pageID">The page identifier to assign.</param>
-        /// <param name="pageType">The type of page to create.</param>
-        /// <returns>A new instance of the appropriate page subclass.</returns>
-        public static BasePage CreateInstance(uint pageID, PageType pageType)
-        {
-            switch (pageType)
-            {
-                case PageType.Collection: return new CollectionPage(pageID);
-                case PageType.Index: return new IndexPage(pageID);
-                case PageType.Data: return new DataPage(pageID);
-                case PageType.Extend: return new ExtendPage(pageID);
-                case PageType.Empty: return new EmptyPage(pageID);
-                // use Header as default, because header page will read fixed HEADER_INFO and validate file format (if is not valid datafile)
-                default: return new HeaderPage();
-            }
-        }
+		/// <summary>
+		/// Create a new empty page instance based on the specified <see cref="PageType"/>.
+		/// </summary>
+		/// <param name="pageID">The page identifier to assign.</param>
+		/// <param name="pageType">The type of page to create.</param>
+		/// <returns>A new instance of the appropriate page subclass.</returns>
+		public static BasePage CreateInstance(uint pageID, PageType pageType)
+		{
+			switch (pageType)
+			{
+				case PageType.Collection: return new CollectionPage(pageID);
+				case PageType.Index: return new IndexPage(pageID);
+				case PageType.Data: return new DataPage(pageID);
+				case PageType.Extend: return new ExtendPage(pageID);
+				case PageType.Empty: return new EmptyPage(pageID);
+				// use Header as default, because header page will read fixed HEADER_INFO and validate file format (if is not valid datafile)
+				default: return new HeaderPage();
+			}
+		}
 
-        /// <summary>
-        /// Deserialize a page from a raw byte buffer, creating the correct page subclass based on the embedded page type.
-        /// </summary>
-        /// <param name="buffer">A byte array of <see cref="PAGE_SIZE"/> length containing the serialized page.</param>
-        /// <returns>A fully populated page instance.</returns>
-        public static BasePage ReadPage(byte[] buffer)
-        {
-            var reader = new ByteReader(buffer);
+		/// <summary>
+		/// Deserialize a page from a raw byte buffer, creating the correct page subclass based on the embedded page type.
+		/// </summary>
+		/// <param name="buffer">A byte array of <see cref="PAGE_SIZE"/> length containing the serialized page.</param>
+		/// <returns>A fully populated page instance.</returns>
+		public static BasePage ReadPage(byte[] buffer)
+		{
+			var reader = new ByteReader(buffer);
 
-            var pageID = reader.ReadUInt32();
-            var pageType = (PageType)reader.ReadByte();
+			var pageID = reader.ReadUInt32();
+			var pageType = (PageType)reader.ReadByte();
 
-            if (pageID == 0 && (byte)pageType > 5)
-            {
-                throw UltraLiteException.InvalidDatabase();
-            }
+			if (pageID == 0 && (byte)pageType > 5)
+			{
+				throw UltraLiteException.InvalidDatabase();
+			}
 
-            var page = CreateInstance(pageID, pageType);
+			var page = CreateInstance(pageID, pageType);
 
-            page.ReadHeader(reader);
-            page.ReadContent(reader);
+			page.ReadHeader(reader);
+			page.ReadContent(reader);
 
-            page.DiskData = buffer;
+			page.DiskData = buffer;
 
-            return page;
-        }
+			return page;
+		}
 
-        /// <summary>
-        /// Serialize this page to a byte array of <see cref="PAGE_SIZE"/> length, updating <see cref="DiskData"/>.
-        /// </summary>
-        /// <returns>The serialized page bytes.</returns>
-        public byte[] WritePage()
-        {
-            var writer = new ByteWriter(BasePage.PAGE_SIZE);
+		/// <summary>
+		/// Serialize this page to a byte array of <see cref="PAGE_SIZE"/> length, updating <see cref="DiskData"/>.
+		/// </summary>
+		/// <returns>The serialized page bytes.</returns>
+		public byte[] WritePage()
+		{
+			var writer = new ByteWriter(BasePage.PAGE_SIZE);
 
-            this.WriteHeader(writer);
+			this.WriteHeader(writer);
 
-            if (this.PageType != PageType.Empty)
-            {
-                this.WriteContent(writer);
-            }
+			if (this.PageType != PageType.Empty)
+			{
+				this.WriteContent(writer);
+			}
 
-            // update data bytes
-            this.DiskData = writer.Buffer;
+			// update data bytes
+			this.DiskData = writer.Buffer;
 
-            return writer.Buffer;
-        }
+			return writer.Buffer;
+		}
 
-        private void ReadHeader(ByteReader reader)
-        {
-            // first 5 bytes (pageID + pageType) was readed before class create
-            // this.PageID
-            // this.PageType
+		private void ReadHeader(ByteReader reader)
+		{
+			// first 5 bytes (pageID + pageType) was readed before class create
+			// this.PageID
+			// this.PageType
 
-            this.PrevPageID = reader.ReadUInt32();
-            this.NextPageID = reader.ReadUInt32();
-            this.ItemCount = reader.ReadUInt16();
-            this.FreeBytes = reader.ReadUInt16();
-            reader.Skip(8); // reserved 8 bytes
-        }
+			this.PrevPageID = reader.ReadUInt32();
+			this.NextPageID = reader.ReadUInt32();
+			this.ItemCount = reader.ReadUInt16();
+			this.FreeBytes = reader.ReadUInt16();
+			reader.Skip(8); // reserved 8 bytes
+		}
 
-        private void WriteHeader(ByteWriter writer)
-        {
-            writer.Write(this.PageID);
-            writer.Write((byte)this.PageType);
+		private void WriteHeader(ByteWriter writer)
+		{
+			writer.Write(this.PageID);
+			writer.Write((byte)this.PageType);
 
-            writer.Write(this.PrevPageID);
-            writer.Write(this.NextPageID);
-            writer.Write((UInt16)this.ItemCount);
-            writer.Write((UInt16)this.FreeBytes);
-            writer.Skip(8); // reserved 8 bytes
-        }
+			writer.Write(this.PrevPageID);
+			writer.Write(this.NextPageID);
+			writer.Write((UInt16)this.ItemCount);
+			writer.Write((UInt16)this.FreeBytes);
+			writer.Skip(8); // reserved 8 bytes
+		}
 
-        protected abstract void ReadContent(ByteReader reader);
+		protected abstract void ReadContent(ByteReader reader);
 
-        protected abstract void WriteContent(ByteWriter writer);
+		protected abstract void WriteContent(ByteWriter writer);
 
-        #endregion
-    }
+		#endregion
+	}
 }

@@ -101,7 +101,7 @@ namespace UltraLiteDB.Tests.Engine
 				var bigUpdateSw = new Stopwatch();
 
 				bigUpdateSw.Start();
-				for(int i = 0; i < runs; i++)
+				for (int i = 0; i < runs; i++)
 				{
 					collection.Update(bigDoc);
 				}
@@ -110,7 +110,7 @@ namespace UltraLiteDB.Tests.Engine
 				var smallUpdateSw = new Stopwatch();
 
 				smallUpdateSw.Start();
-				for(int i = 0; i < runs; i++)
+				for (int i = 0; i < runs; i++)
 				{
 					collection.Update(smallDoc);
 				}
@@ -119,7 +119,7 @@ namespace UltraLiteDB.Tests.Engine
 				var compoundUpdateSw = new Stopwatch();
 
 				compoundUpdateSw.Start();
-				for(int i = 0; i < runs; i++)
+				for (int i = 0; i < runs; i++)
 				{
 					collection.Update(cDoc1);
 					collection.Update(cDoc2);
@@ -138,7 +138,7 @@ namespace UltraLiteDB.Tests.Engine
 		{
 			var rnd = new Random();
 
-			for(var i = 0; i < count; i++)
+			for (var i = 0; i < count; i++)
 			{
 				yield return new BsonDocument
 				{

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -6,170 +6,170 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace UltraLiteDB
 {
-    /// <summary>
-    /// Represents a BSON array — an ordered list of <see cref="BsonValue"/> elements.
-    /// Implements <see cref="IList{T}"/> for indexed access. Null items are stored as <see cref="BsonValue.Null"/>.
-    /// </summary>
-    public class BsonArray : BsonValue, IList<BsonValue>
-    {
-        public BsonArray()
-            : base(BsonType.Array, new List<BsonValue>())
-        {
-        }
+	/// <summary>
+	/// Represents a BSON array — an ordered list of <see cref="BsonValue"/> elements.
+	/// Implements <see cref="IList{T}"/> for indexed access. Null items are stored as <see cref="BsonValue.Null"/>.
+	/// </summary>
+	public class BsonArray : BsonValue, IList<BsonValue>
+	{
+		public BsonArray()
+			: base(BsonType.Array, new List<BsonValue>())
+		{
+		}
 
-        public BsonArray(List<BsonValue> array)
-            : this()
-        {
-            if (array == null) throw new ArgumentNullException(nameof(array));
+		public BsonArray(List<BsonValue> array)
+			: this()
+		{
+			if (array == null) throw new ArgumentNullException(nameof(array));
 
-            this.AddRange(array);
-        }
+			this.AddRange(array);
+		}
 
-        public BsonArray(BsonValue[] array)
-            : this()
-        {
-            if (array == null) throw new ArgumentNullException(nameof(array));
+		public BsonArray(BsonValue[] array)
+			: this()
+		{
+			if (array == null) throw new ArgumentNullException(nameof(array));
 
-            this.AddRange(array);
-        }
+			this.AddRange(array);
+		}
 
-        public BsonArray(IEnumerable<BsonValue> items)
-            : this()
-        {
-            if (items == null) throw new ArgumentNullException(nameof(items));
+		public BsonArray(IEnumerable<BsonValue> items)
+			: this()
+		{
+			if (items == null) throw new ArgumentNullException(nameof(items));
 
-            this.AddRange(items);
-        }
+			this.AddRange(items);
+		}
 
-         public BsonArray(IEnumerable items)
-            : this()
-        {
-            if (items == null) throw new ArgumentNullException(nameof(items));
+		public BsonArray(IEnumerable items)
+		   : this()
+		{
+			if (items == null) throw new ArgumentNullException(nameof(items));
 
-            this.AddRange(items);
-        }
+			this.AddRange(items);
+		}
 
-        internal new IList<BsonValue> RawValue => (List<BsonValue>)base.RawValue;
+		internal new IList<BsonValue> RawValue => (List<BsonValue>)base.RawValue;
 
-        [AllowNull]
-        public override BsonValue this[int index]
-        {
-            get
-            {
-                return this.RawValue[index];
-            }
-            set
-            {
-                this.RawValue[index] = value ?? BsonValue.Null;
-            }
-        }
+		[AllowNull]
+		public override BsonValue this[int index]
+		{
+			get
+			{
+				return this.RawValue[index];
+			}
+			set
+			{
+				this.RawValue[index] = value ?? BsonValue.Null;
+			}
+		}
 
-        public int Count => this.RawValue.Count;
+		public int Count => this.RawValue.Count;
 
-        public bool IsReadOnly => false;
+		public bool IsReadOnly => false;
 
-        public void Add(BsonValue? item) => this.RawValue.Add(item ?? BsonValue.Null);
+		public void Add(BsonValue? item) => this.RawValue.Add(item ?? BsonValue.Null);
 
-        public void AddRange<TCollection>(TCollection collection)
-            where TCollection : ICollection<BsonValue>
-        {
-            if(collection == null)
-                throw new ArgumentNullException(nameof(collection));
+		public void AddRange<TCollection>(TCollection collection)
+			where TCollection : ICollection<BsonValue>
+		{
+			if (collection == null)
+				throw new ArgumentNullException(nameof(collection));
 
-            var list = (List<BsonValue>)base.RawValue;
+			var list = (List<BsonValue>)base.RawValue;
 
-            var listEmptySpace = list.Capacity - list.Count;
-            if (listEmptySpace < collection.Count)
-            {
-                list.Capacity += collection.Count;
-            }
+			var listEmptySpace = list.Capacity - list.Count;
+			if (listEmptySpace < collection.Count)
+			{
+				list.Capacity += collection.Count;
+			}
 
-            foreach (var bsonValue in collection)
-            {
-                list.Add(bsonValue ?? Null);    
-            }
-            
-        }
-        
-        public void AddRange(IEnumerable<BsonValue> items)
-        {
-            if (items == null) throw new ArgumentNullException(nameof(items));
+			foreach (var bsonValue in collection)
+			{
+				list.Add(bsonValue ?? Null);
+			}
 
-            foreach (var item in items)
-            {
-                this.Add(item ?? BsonValue.Null);
-            }
-        }
+		}
 
-        public void AddRange(IEnumerable items)
-        {
-            if (items == null) throw new ArgumentNullException(nameof(items));
+		public void AddRange(IEnumerable<BsonValue> items)
+		{
+			if (items == null) throw new ArgumentNullException(nameof(items));
 
-            foreach (var item in items)
-            {
-                this.Add(BsonValue.FromObject(item));
-            }
-        }
+			foreach (var item in items)
+			{
+				this.Add(item ?? BsonValue.Null);
+			}
+		}
 
-        public void Clear() => this.RawValue.Clear();
+		public void AddRange(IEnumerable items)
+		{
+			if (items == null) throw new ArgumentNullException(nameof(items));
 
-        public bool Contains(BsonValue? item) => this.RawValue.Contains(item ?? BsonValue.Null);
+			foreach (var item in items)
+			{
+				this.Add(BsonValue.FromObject(item));
+			}
+		}
 
-        public void CopyTo(BsonValue[] array, int arrayIndex) => this.RawValue.CopyTo(array, arrayIndex);
+		public void Clear() => this.RawValue.Clear();
 
-        public IEnumerator<BsonValue> GetEnumerator() => this.RawValue.GetEnumerator();
+		public bool Contains(BsonValue? item) => this.RawValue.Contains(item ?? BsonValue.Null);
 
-        public int IndexOf(BsonValue item) => this.RawValue.IndexOf(item ?? BsonValue.Null);
+		public void CopyTo(BsonValue[] array, int arrayIndex) => this.RawValue.CopyTo(array, arrayIndex);
 
-        public void Insert(int index, BsonValue? item) => this.RawValue.Insert(index, item ?? BsonValue.Null);
+		public IEnumerator<BsonValue> GetEnumerator() => this.RawValue.GetEnumerator();
 
-        public bool Remove(BsonValue item) => this.RawValue.Remove(item);
+		public int IndexOf(BsonValue item) => this.RawValue.IndexOf(item ?? BsonValue.Null);
 
-        public void RemoveAt(int index) => this.RawValue.RemoveAt(index);
+		public void Insert(int index, BsonValue? item) => this.RawValue.Insert(index, item ?? BsonValue.Null);
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            foreach (var value in this.RawValue)
-            {
-                yield return value;
-            }
-        }
+		public bool Remove(BsonValue item) => this.RawValue.Remove(item);
 
-        public override int CompareTo(BsonValue other)
-        {
-            // if types are different, returns sort type order
-            if (other.Type != BsonType.Array) return this.Type.CompareTo(other.Type);
+		public void RemoveAt(int index) => this.RawValue.RemoveAt(index);
 
-            var otherArray = other.AsArray!;
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			foreach (var value in this.RawValue)
+			{
+				yield return value;
+			}
+		}
 
-            var result = 0;
-            var i = 0;
-            var stop = Math.Min(this.Count, otherArray.Count);
+		public override int CompareTo(BsonValue other)
+		{
+			// if types are different, returns sort type order
+			if (other.Type != BsonType.Array) return this.Type.CompareTo(other.Type);
 
-            // compare each element
-            for (; 0 == result && i < stop; i++)
-                result = this[i].CompareTo(otherArray[i]);
+			var otherArray = other.AsArray!;
 
-            if (result != 0) return result;
-            if (i == this.Count) return i == otherArray.Count ? 0 : -1;
-            return 1;
-        }
+			var result = 0;
+			var i = 0;
+			var stop = Math.Min(this.Count, otherArray.Count);
 
-        private int _length;
+			// compare each element
+			for (; 0 == result && i < stop; i++)
+				result = this[i].CompareTo(otherArray[i]);
 
-        public override int GetBytesCount(bool recalc)
-        {
-            if (recalc == false && _length > 0) return _length;
+			if (result != 0) return result;
+			if (i == this.Count) return i == otherArray.Count ? 0 : -1;
+			return 1;
+		}
 
-            var length = 5;
-            var array = this.RawValue;
-            
-            for (var i = 0; i < array.Count; i++)
-            {
-                length += this.GetBytesCountElement(i.ToString(), array[i]);
-            }
+		private int _length;
 
-            return _length = length;
-        }
-    }
+		public override int GetBytesCount(bool recalc)
+		{
+			if (recalc == false && _length > 0) return _length;
+
+			var length = 5;
+			var array = this.RawValue;
+
+			for (var i = 0; i < array.Count; i++)
+			{
+				length += this.GetBytesCountElement(i.ToString(), array[i]);
+			}
+
+			return _length = length;
+		}
+	}
 }

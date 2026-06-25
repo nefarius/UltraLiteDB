@@ -26,13 +26,13 @@ namespace UltraLiteDB
 		{
 			var index = 0;
 			BsonValue? value = null;
-			if(Field != null && doc.TryGetValue(Field, out value))
+			if (Field != null && doc.TryGetValue(Field, out value))
 			{
 				index++;
 				yield return value;
 			}
 
-			if(index == 0 && includeNullIfEmpty) yield return BsonValue.Null;
+			if (index == 0 && includeNullIfEmpty) yield return BsonValue.Null;
 		}
 	}
 }

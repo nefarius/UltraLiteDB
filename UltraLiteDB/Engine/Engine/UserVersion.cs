@@ -1,35 +1,35 @@
-﻿
+
 namespace UltraLiteDB
 {
-    public partial class UltraLiteEngine
-    {
-        /// <summary>
-        /// Gets or sets a user-defined version number stored in the database header.
-        /// Useful for tracking schema migrations.
-        /// </summary>
-        public ushort UserVersion
-        {
-            get
-            {
+	public partial class UltraLiteEngine
+	{
+		/// <summary>
+		/// Gets or sets a user-defined version number stored in the database header.
+		/// Useful for tracking schema migrations.
+		/// </summary>
+		public ushort UserVersion
+		{
+			get
+			{
 
-                var header = _pager.GetPage<HeaderPage>(0);
+				var header = _pager.GetPage<HeaderPage>(0);
 
-                return header.UserVersion;
-            
-            }
-            set
-            {
-                this.Transaction<bool>(null, (col) =>
-                {
-                    var header = _pager.GetPage<HeaderPage>(0);
+				return header.UserVersion;
 
-                    header.UserVersion = value;
+			}
+			set
+			{
+				this.Transaction<bool>(null, (col) =>
+				{
+					var header = _pager.GetPage<HeaderPage>(0);
 
-                    _pager.SetDirty(header);
+					header.UserVersion = value;
 
-                    return true;
-                });
-            }
-        }
-    }
+					_pager.SetDirty(header);
+
+					return true;
+				});
+			}
+		}
+	}
 }

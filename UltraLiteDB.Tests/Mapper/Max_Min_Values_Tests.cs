@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,39 +8,39 @@ using System.Drawing;
 
 namespace UltraLiteDB.Tests.Mapper
 {
-    #region Model
+	#region Model
 
-    public class MyMaxValueClass
-    {
-        public int Id { get; set; }
+	public class MyMaxValueClass
+	{
+		public int Id { get; set; }
 
-        public UInt64 Min { get; set; }
-        public UInt64 Max { get; set; }
-    }
+		public UInt64 Min { get; set; }
+		public UInt64 Max { get; set; }
+	}
 
-    #endregion
+	#endregion
 
-    [TestClass]
-    public class Max_Min_Values_Tests
-    {
-        [TestMethod]
-        public void Max_Min_Values()
-        {
-            var c1 = new MyMaxValueClass
-            {
-                Min = UInt64.MinValue,
-                Max = UInt64.MaxValue
-            };
+	[TestClass]
+	public class Max_Min_Values_Tests
+	{
+		[TestMethod]
+		public void Max_Min_Values()
+		{
+			var c1 = new MyMaxValueClass
+			{
+				Min = UInt64.MinValue,
+				Max = UInt64.MaxValue
+			};
 
-            var doc = BsonMapper.Global.ToDocument(c1);
-            var json = JsonSerializer.Serialize(doc);
-            var bson = BsonSerializer.Serialize(doc);
+			var doc = BsonMapper.Global.ToDocument(c1);
+			var json = JsonSerializer.Serialize(doc);
+			var bson = BsonSerializer.Serialize(doc);
 
-            var ndoc = BsonSerializer.Deserialize(bson);
-            var c2 = BsonMapper.Global.ToObject<MyMaxValueClass>(ndoc);
+			var ndoc = BsonSerializer.Deserialize(bson);
+			var c2 = BsonMapper.Global.ToObject<MyMaxValueClass>(ndoc);
 
-            Assert.AreEqual(c1.Min, c2.Min);
-            Assert.AreEqual(c1.Max, c2.Max);
-        }
-    }
+			Assert.AreEqual(c1.Min, c2.Min);
+			Assert.AreEqual(c1.Max, c2.Max);
+		}
+	}
 }

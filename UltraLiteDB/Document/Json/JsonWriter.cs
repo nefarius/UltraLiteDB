@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -6,306 +6,306 @@ using System.Linq;
 
 namespace UltraLiteDB
 {
-    /// <summary>
-    /// Writes <see cref="BsonValue"/> instances as JSON text to a <see cref="TextWriter"/>.
-    /// Supports pretty-printing with configurable indentation and encodes extended BSON data types
-    /// (e.g., <c>$oid</c>, <c>$date</c>, <c>$binary</c>) using the JSON extended format.
-    /// </summary>
-    public class JsonWriter
-    {
-        private readonly static IFormatProvider _numberFormat = CultureInfo.InvariantCulture.NumberFormat;
+	/// <summary>
+	/// Writes <see cref="BsonValue"/> instances as JSON text to a <see cref="TextWriter"/>.
+	/// Supports pretty-printing with configurable indentation and encodes extended BSON data types
+	/// (e.g., <c>$oid</c>, <c>$date</c>, <c>$binary</c>) using the JSON extended format.
+	/// </summary>
+	public class JsonWriter
+	{
+		private readonly static IFormatProvider _numberFormat = CultureInfo.InvariantCulture.NumberFormat;
 
-        private TextWriter _writer;
-        private int _indent;
-        private string _spacer = "";
+		private TextWriter _writer;
+		private int _indent;
+		private string _spacer = "";
 
-        /// <summary>
-        /// Gets or sets the number of spaces per indentation level when <see cref="Pretty"/> is enabled. Default is 4.
-        /// </summary>
-        public int Indent { get; set; } = 4;
+		/// <summary>
+		/// Gets or sets the number of spaces per indentation level when <see cref="Pretty"/> is enabled. Default is 4.
+		/// </summary>
+		public int Indent { get; set; } = 4;
 
-        /// <summary>
-        /// Gets or sets whether the writer outputs formatted JSON with newlines and indentation. Default is <c>false</c>.
-        /// </summary>
-        public bool Pretty { get; set; } = false;
+		/// <summary>
+		/// Gets or sets whether the writer outputs formatted JSON with newlines and indentation. Default is <c>false</c>.
+		/// </summary>
+		public bool Pretty { get; set; } = false;
 
-        /// <summary>
-        /// Initializes a new instance of <see cref="JsonWriter"/> that writes JSON output to the specified <see cref="TextWriter"/>.
-        /// </summary>
-        /// <param name="writer">The <see cref="TextWriter"/> to write JSON output to.</param>
-        public JsonWriter(TextWriter writer)
-        {
-            _writer = writer;
-        }
+		/// <summary>
+		/// Initializes a new instance of <see cref="JsonWriter"/> that writes JSON output to the specified <see cref="TextWriter"/>.
+		/// </summary>
+		/// <param name="writer">The <see cref="TextWriter"/> to write JSON output to.</param>
+		public JsonWriter(TextWriter writer)
+		{
+			_writer = writer;
+		}
 
-        /// <summary>
-        /// Serializes a <see cref="BsonValue"/> as JSON to the underlying <see cref="TextWriter"/>.
-        /// Resets indentation state before writing.
-        /// </summary>
-        /// <param name="value">The <see cref="BsonValue"/> to serialize. If null, <see cref="BsonValue.Null"/> is used.</param>
-        public void Serialize(BsonValue value)
-        {
-            _indent = 0;
-            _spacer = this.Pretty ? " " : "";
+		/// <summary>
+		/// Serializes a <see cref="BsonValue"/> as JSON to the underlying <see cref="TextWriter"/>.
+		/// Resets indentation state before writing.
+		/// </summary>
+		/// <param name="value">The <see cref="BsonValue"/> to serialize. If null, <see cref="BsonValue.Null"/> is used.</param>
+		public void Serialize(BsonValue value)
+		{
+			_indent = 0;
+			_spacer = this.Pretty ? " " : "";
 
-            this.WriteValue(value ?? BsonValue.Null);
-        }
+			this.WriteValue(value ?? BsonValue.Null);
+		}
 
-        private void WriteValue(BsonValue value)
-        {
-            // use direct cast to better performance
-            switch (value.Type)
-            {
-                case BsonType.Null:
-                    _writer.Write("null");
-                    break;
+		private void WriteValue(BsonValue value)
+		{
+			// use direct cast to better performance
+			switch (value.Type)
+			{
+				case BsonType.Null:
+					_writer.Write("null");
+					break;
 
-                case BsonType.Array:
-                    this.WriteArray(value.AsArray!);
-                    break;
+				case BsonType.Array:
+					this.WriteArray(value.AsArray!);
+					break;
 
-                case BsonType.Document:
-                    this.WriteObject(value.AsDocument!);
-                    break;
+				case BsonType.Document:
+					this.WriteObject(value.AsDocument!);
+					break;
 
-                case BsonType.Boolean:
-                    _writer.Write(value.AsBoolean.ToString().ToLower());
-                    break;
+				case BsonType.Boolean:
+					_writer.Write(value.AsBoolean.ToString().ToLower());
+					break;
 
-                case BsonType.String:
-                    this.WriteString(value.AsString);
-                    break;
+				case BsonType.String:
+					this.WriteString(value.AsString);
+					break;
 
-                case BsonType.Int32:
-                    _writer.Write(value.AsInt32.ToString(_numberFormat));
-                    break;
+				case BsonType.Int32:
+					_writer.Write(value.AsInt32.ToString(_numberFormat));
+					break;
 
-                case BsonType.Double:
-                    _writer.Write(value.AsDouble.ToString("0.0########", _numberFormat));
-                    break;
+				case BsonType.Double:
+					_writer.Write(value.AsDouble.ToString("0.0########", _numberFormat));
+					break;
 
-                case BsonType.Binary:
-                    var bytes = value.AsBinary;
-                    this.WriteExtendDataType("$binary", Convert.ToBase64String(bytes.Array, bytes.Offset, bytes.Count));
-                    break;
+				case BsonType.Binary:
+					var bytes = value.AsBinary;
+					this.WriteExtendDataType("$binary", Convert.ToBase64String(bytes.Array, bytes.Offset, bytes.Count));
+					break;
 
-                case BsonType.ObjectId:
-                    this.WriteExtendDataType("$oid", value.AsObjectId.ToString());
-                    break;
+				case BsonType.ObjectId:
+					this.WriteExtendDataType("$oid", value.AsObjectId.ToString());
+					break;
 
-                case BsonType.Guid:
-                    this.WriteExtendDataType("$guid", value.AsGuid.ToString());
-                    break;
+				case BsonType.Guid:
+					this.WriteExtendDataType("$guid", value.AsGuid.ToString());
+					break;
 
-                case BsonType.DateTime:
-                    this.WriteExtendDataType("$date", value.AsDateTime.ToUniversalTime().ToString("o"));
-                    break;
+				case BsonType.DateTime:
+					this.WriteExtendDataType("$date", value.AsDateTime.ToUniversalTime().ToString("o"));
+					break;
 
-                case BsonType.Int64:
-                    this.WriteExtendDataType("$numberLong", value.AsInt64.ToString(_numberFormat));
-                    break;
+				case BsonType.Int64:
+					this.WriteExtendDataType("$numberLong", value.AsInt64.ToString(_numberFormat));
+					break;
 
-                case BsonType.Decimal:
-                    this.WriteExtendDataType("$numberDecimal", value.AsDecimal.ToString(_numberFormat));
-                    break;
+				case BsonType.Decimal:
+					this.WriteExtendDataType("$numberDecimal", value.AsDecimal.ToString(_numberFormat));
+					break;
 
-                case BsonType.MinValue:
-                    this.WriteExtendDataType("$minValue", "1");
-                    break;
+				case BsonType.MinValue:
+					this.WriteExtendDataType("$minValue", "1");
+					break;
 
-                case BsonType.MaxValue:
-                    this.WriteExtendDataType("$maxValue", "1");
-                    break;
-            }
-        }
+				case BsonType.MaxValue:
+					this.WriteExtendDataType("$maxValue", "1");
+					break;
+			}
+		}
 
-        private void WriteObject(BsonDocument obj)
-        {
-            var length = obj.Keys.Count();
-            var hasData = length > 0;
+		private void WriteObject(BsonDocument obj)
+		{
+			var length = obj.Keys.Count();
+			var hasData = length > 0;
 
-            this.WriteStartBlock("{", hasData);
+			this.WriteStartBlock("{", hasData);
 
-            var index = 0;
+			var index = 0;
 
-            foreach (var el in obj.GetElements())
-            {
-                this.WriteKeyValue(el.Key, el.Value, index++ < length - 1);
-            }
+			foreach (var el in obj.GetElements())
+			{
+				this.WriteKeyValue(el.Key, el.Value, index++ < length - 1);
+			}
 
-            this.WriteEndBlock("}", hasData);
-        }
+			this.WriteEndBlock("}", hasData);
+		}
 
-        private void WriteArray(BsonArray arr)
-        {
-            var hasData = arr.Count > 0;
+		private void WriteArray(BsonArray arr)
+		{
+			var hasData = arr.Count > 0;
 
-            this.WriteStartBlock("[", hasData);
+			this.WriteStartBlock("[", hasData);
 
-            for (var i = 0; i < arr.Count; i++)
-            {
-                var item = arr[i];
+			for (var i = 0; i < arr.Count; i++)
+			{
+				var item = arr[i];
 
-                // do not do this tests if is not pretty format - to better performance
-                if (this.Pretty && item)
-                {
-                    if (!((item.IsDocument && item.AsDocument!.Keys.Any()) || (item.IsArray && item.AsArray!.Count > 0)))
-                    {
-                        this.WriteIndent();
-                    }
-                }
+				// do not do this tests if is not pretty format - to better performance
+				if (this.Pretty && item)
+				{
+					if (!((item.IsDocument && item.AsDocument!.Keys.Any()) || (item.IsArray && item.AsArray!.Count > 0)))
+					{
+						this.WriteIndent();
+					}
+				}
 
-                this.WriteValue(item ?? BsonValue.Null);
+				this.WriteValue(item ?? BsonValue.Null);
 
-                if (i < arr.Count - 1)
-                {
-                    _writer.Write(',');
-                }
-                this.WriteNewLine();
-            }
+				if (i < arr.Count - 1)
+				{
+					_writer.Write(',');
+				}
+				this.WriteNewLine();
+			}
 
-            this.WriteEndBlock("]", hasData);
-        }
+			this.WriteEndBlock("]", hasData);
+		}
 
-        private void WriteString(string s)
-        {
-            _writer.Write('\"');
-            int l = s.Length;
-            for (var index = 0; index < l; index++)
-            {
-                var c = s[index];
-                switch (c)
-                {
-                    case '\"':
-                        _writer.Write("\\\"");
-                        break;
+		private void WriteString(string s)
+		{
+			_writer.Write('\"');
+			int l = s.Length;
+			for (var index = 0; index < l; index++)
+			{
+				var c = s[index];
+				switch (c)
+				{
+					case '\"':
+						_writer.Write("\\\"");
+						break;
 
-                    case '\\':
-                        _writer.Write("\\\\");
-                        break;
+					case '\\':
+						_writer.Write("\\\\");
+						break;
 
-                    case '\b':
-                        _writer.Write("\\b");
-                        break;
+					case '\b':
+						_writer.Write("\\b");
+						break;
 
-                    case '\f':
-                        _writer.Write("\\f");
-                        break;
+					case '\f':
+						_writer.Write("\\f");
+						break;
 
-                    case '\n':
-                        _writer.Write("\\n");
-                        break;
+					case '\n':
+						_writer.Write("\\n");
+						break;
 
-                    case '\r':
-                        _writer.Write("\\r");
-                        break;
+					case '\r':
+						_writer.Write("\\r");
+						break;
 
-                    case '\t':
-                        _writer.Write("\\t");
-                        break;
+					case '\t':
+						_writer.Write("\\t");
+						break;
 
-                    default:
-                        int i = (int)c;
-                        if (i < 32 || i > 127)
-                        {
-                            _writer.Write("\\u");
-                            _writer.Write(i.ToString("x04"));
-                        }
-                        else
-                        {
-                            _writer.Write(c);
-                        }
-                        break;
-                }
-            }
-            _writer.Write('\"');
-        }
+					default:
+						int i = (int)c;
+						if (i < 32 || i > 127)
+						{
+							_writer.Write("\\u");
+							_writer.Write(i.ToString("x04"));
+						}
+						else
+						{
+							_writer.Write(c);
+						}
+						break;
+				}
+			}
+			_writer.Write('\"');
+		}
 
-        private void WriteExtendDataType(string type, string value)
-        {
-            // format: { "$type": "string-value" }
-            // no string.Format to better performance
-            _writer.Write("{\"");
-            _writer.Write(type);
-            _writer.Write("\":");
-            _writer.Write(_spacer);
-            _writer.Write("\"");
-            _writer.Write(value);
-            _writer.Write("\"}");
-        }
+		private void WriteExtendDataType(string type, string value)
+		{
+			// format: { "$type": "string-value" }
+			// no string.Format to better performance
+			_writer.Write("{\"");
+			_writer.Write(type);
+			_writer.Write("\":");
+			_writer.Write(_spacer);
+			_writer.Write("\"");
+			_writer.Write(value);
+			_writer.Write("\"}");
+		}
 
-        private void WriteKeyValue(string key, BsonValue value, bool comma)
-        {
-            this.WriteIndent();
+		private void WriteKeyValue(string key, BsonValue value, bool comma)
+		{
+			this.WriteIndent();
 
-            _writer.Write('\"');
-            _writer.Write(key);
-            _writer.Write("\":");
+			_writer.Write('\"');
+			_writer.Write(key);
+			_writer.Write("\":");
 
-            // do not do this tests if is not pretty format - to better performance
-            if (this.Pretty)
-            {
-                _writer.Write(' ');
+			// do not do this tests if is not pretty format - to better performance
+			if (this.Pretty)
+			{
+				_writer.Write(' ');
 
-                if ((value.IsDocument && value.AsDocument!.Keys.Any()) || (value.IsArray && value.AsArray!.Count > 0))
-                {
-                    this.WriteNewLine();
-                }
-            }
+				if ((value.IsDocument && value.AsDocument!.Keys.Any()) || (value.IsArray && value.AsArray!.Count > 0))
+				{
+					this.WriteNewLine();
+				}
+			}
 
-            this.WriteValue(value ?? BsonValue.Null);
+			this.WriteValue(value ?? BsonValue.Null);
 
-            if (comma)
-            {
-                _writer.Write(',');
-            }
+			if (comma)
+			{
+				_writer.Write(',');
+			}
 
-            this.WriteNewLine();
-        }
+			this.WriteNewLine();
+		}
 
-        private void WriteStartBlock(string str, bool hasData)
-        {
-            if (hasData)
-            {
-                this.WriteIndent();
-                _writer.Write(str);
-                this.WriteNewLine();
-                _indent++;
-            }
-            else
-            {
-                _writer.Write(str);
-            }
-        }
+		private void WriteStartBlock(string str, bool hasData)
+		{
+			if (hasData)
+			{
+				this.WriteIndent();
+				_writer.Write(str);
+				this.WriteNewLine();
+				_indent++;
+			}
+			else
+			{
+				_writer.Write(str);
+			}
+		}
 
-        private void WriteEndBlock(string str, bool hasData)
-        {
-            if (hasData)
-            {
-                _indent--;
-                this.WriteIndent();
-                _writer.Write(str);
-            }
-            else
-            {
-                _writer.Write(str);
-            }
-        }
+		private void WriteEndBlock(string str, bool hasData)
+		{
+			if (hasData)
+			{
+				_indent--;
+				this.WriteIndent();
+				_writer.Write(str);
+			}
+			else
+			{
+				_writer.Write(str);
+			}
+		}
 
-        private void WriteNewLine()
-        {
-            if (this.Pretty)
-            {
-                _writer.WriteLine();
-            }
-        }
+		private void WriteNewLine()
+		{
+			if (this.Pretty)
+			{
+				_writer.WriteLine();
+			}
+		}
 
-        private void WriteIndent()
-        {
-            if (this.Pretty)
-            {
-                _writer.Write("".PadRight(_indent * this.Indent, ' '));
-            }
-        }
-    }
+		private void WriteIndent()
+		{
+			if (this.Pretty)
+			{
+				_writer.Write("".PadRight(_indent * this.Indent, ' '));
+			}
+		}
+	}
 }

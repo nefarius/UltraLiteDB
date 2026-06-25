@@ -1,196 +1,196 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace UltraLiteDB
 {
-    /// <summary>
-    /// Represents the collection page AND a collection item, because CollectionPage represent a Collection (1 page = 1 collection). All collections pages are linked with Prev/Next links
-    /// </summary>
-    internal class CollectionPage : BasePage
-    {
-        /// <summary>
-        /// Represent maximum bytes that all collections names can be used in header
-        /// </summary>
-        public const ushort MAX_COLLECTIONS_SIZE = 3000;
+	/// <summary>
+	/// Represents the collection page AND a collection item, because CollectionPage represent a Collection (1 page = 1 collection). All collections pages are linked with Prev/Next links
+	/// </summary>
+	internal class CollectionPage : BasePage
+	{
+		/// <summary>
+		/// Represent maximum bytes that all collections names can be used in header
+		/// </summary>
+		public const ushort MAX_COLLECTIONS_SIZE = 3000;
 
-        /// <summary>
-        /// Regex pattern that validates collection names: 1-60 word characters or hyphens.
-        /// </summary>
-        public static Regex NamePattern = new Regex(@"^[\w-]{1,60}$", RegexOptions.Compiled);
+		/// <summary>
+		/// Regex pattern that validates collection names: 1-60 word characters or hyphens.
+		/// </summary>
+		public static Regex NamePattern = new Regex(@"^[\w-]{1,60}$", RegexOptions.Compiled);
 
-        /// <summary>
-        /// Page type = Collection
-        /// </summary>
-        public override PageType PageType { get { return PageType.Collection; } }
+		/// <summary>
+		/// Page type = Collection
+		/// </summary>
+		public override PageType PageType { get { return PageType.Collection; } }
 
-        /// <summary>
-        /// Name of collection
-        /// </summary>
-        public string CollectionName { get; set; } = null!;
+		/// <summary>
+		/// Name of collection
+		/// </summary>
+		public string CollectionName { get; set; } = null!;
 
-        /// <summary>
-        /// Get a reference for the free list data page - its private list per collection - each DataPage contains only data for 1 collection (no mixing)
-        /// Must to be a Field to be used as parameter reference
-        /// </summary>
-        public uint FreeDataPageID;
+		/// <summary>
+		/// Get a reference for the free list data page - its private list per collection - each DataPage contains only data for 1 collection (no mixing)
+		/// Must to be a Field to be used as parameter reference
+		/// </summary>
+		public uint FreeDataPageID;
 
-        /// <summary>
-        /// Get the number of documents inside this collection
-        /// </summary>
-        public long DocumentCount { get; set; }
+		/// <summary>
+		/// Get the number of documents inside this collection
+		/// </summary>
+		public long DocumentCount { get; set; }
 
-        /// <summary>
-        /// Get all indexes from this collection - includes non-used indexes
-        /// </summary>
-        public CollectionIndex[] Indexes { get; set; }
+		/// <summary>
+		/// Get all indexes from this collection - includes non-used indexes
+		/// </summary>
+		public CollectionIndex[] Indexes { get; set; }
 
-        /// <summary>
-        /// Storage number sequence to be used in auto _id values
-        /// </summary>
-        public long Sequence { get; set; }
+		/// <summary>
+		/// Storage number sequence to be used in auto _id values
+		/// </summary>
+		public long Sequence { get; set; }
 
-        /// <summary>
-        /// Initializes a new <see cref="CollectionPage"/> with default index slots and counters.
-        /// </summary>
-        /// <param name="pageID">The page identifier for this collection page.</param>
-        public CollectionPage(uint pageID)
-            : base(pageID)
-        {
-            this.FreeDataPageID = uint.MaxValue;
-            this.DocumentCount = 0;
-            this.ItemCount = 1; // fixed for CollectionPage
-            this.FreeBytes = 0; // no free bytes on collection-page - only one collection per page
-            this.Indexes = new CollectionIndex[CollectionIndex.INDEX_PER_COLLECTION];
-            this.Sequence = 0;
+		/// <summary>
+		/// Initializes a new <see cref="CollectionPage"/> with default index slots and counters.
+		/// </summary>
+		/// <param name="pageID">The page identifier for this collection page.</param>
+		public CollectionPage(uint pageID)
+			: base(pageID)
+		{
+			this.FreeDataPageID = uint.MaxValue;
+			this.DocumentCount = 0;
+			this.ItemCount = 1; // fixed for CollectionPage
+			this.FreeBytes = 0; // no free bytes on collection-page - only one collection per page
+			this.Indexes = new CollectionIndex[CollectionIndex.INDEX_PER_COLLECTION];
+			this.Sequence = 0;
 
-            for (var i = 0; i < Indexes.Length; i++)
-            {
-                this.Indexes[i] = new CollectionIndex() { Page = this, Slot = i };
-            }
-        }
+			for (var i = 0; i < Indexes.Length; i++)
+			{
+				this.Indexes[i] = new CollectionIndex() { Page = this, Slot = i };
+			}
+		}
 
-        #region Read/Write pages
+		#region Read/Write pages
 
-        protected override void ReadContent(ByteReader reader)
-        {
-            this.CollectionName = reader.ReadString();
-            this.DocumentCount = reader.ReadInt64();
-            this.FreeDataPageID = reader.ReadUInt32();
+		protected override void ReadContent(ByteReader reader)
+		{
+			this.CollectionName = reader.ReadString();
+			this.DocumentCount = reader.ReadInt64();
+			this.FreeDataPageID = reader.ReadUInt32();
 
-            foreach (var index in this.Indexes)
-            {
-                var field = reader.ReadString();
-                var eq = field.IndexOf('=');
+			foreach (var index in this.Indexes)
+			{
+				var field = reader.ReadString();
+				var eq = field.IndexOf('=');
 
-                // Use same string to avoid change file defition
-                if (eq > 0)
-                {
-                    index.Field = field.Substring(0, eq);
-                }
-                else
-                {
-                    index.Field = field;
-                }
+				// Use same string to avoid change file defition
+				if (eq > 0)
+				{
+					index.Field = field.Substring(0, eq);
+				}
+				else
+				{
+					index.Field = field;
+				}
 
-                index.Unique = reader.ReadBoolean();
-                index.HeadNode = reader.ReadPageAddress();
-                index.TailNode = reader.ReadPageAddress();
-                index.FreeIndexPageID = reader.ReadUInt32();
-            }
+				index.Unique = reader.ReadBoolean();
+				index.HeadNode = reader.ReadPageAddress();
+				index.TailNode = reader.ReadPageAddress();
+				index.FreeIndexPageID = reader.ReadUInt32();
+			}
 
-            // position on page-footer (avoid file structure change)
-            reader.Position = BasePage.PAGE_SIZE - 8 - CollectionIndex.INDEX_PER_COLLECTION;
+			// position on page-footer (avoid file structure change)
+			reader.Position = BasePage.PAGE_SIZE - 8 - CollectionIndex.INDEX_PER_COLLECTION;
 
-            foreach (var index in this.Indexes)
-            {
-                var maxLevel = reader.ReadByte();
-                index.MaxLevel = maxLevel == 0 ? (byte)IndexNode.MAX_LEVEL_LENGTH : maxLevel;
-            }
+			foreach (var index in this.Indexes)
+			{
+				var maxLevel = reader.ReadByte();
+				index.MaxLevel = maxLevel == 0 ? (byte)IndexNode.MAX_LEVEL_LENGTH : maxLevel;
+			}
 
-            this.Sequence = reader.ReadInt64();
-        }
+			this.Sequence = reader.ReadInt64();
+		}
 
-        protected override void WriteContent(ByteWriter writer)
-        {
-            writer.Write(this.CollectionName);
-            writer.Write(this.DocumentCount);
-            writer.Write(this.FreeDataPageID);
+		protected override void WriteContent(ByteWriter writer)
+		{
+			writer.Write(this.CollectionName);
+			writer.Write(this.DocumentCount);
+			writer.Write(this.FreeDataPageID);
 
-            foreach (var index in this.Indexes)
-            {
-                // write Field+Expression only if index are used
-                if(index.Field.Length > 0)
-                {
-                    writer.Write(index.Field + "=" + "$."+index.Field);
-                }
-                else
-                {
-                    writer.Write("");
-                }
+			foreach (var index in this.Indexes)
+			{
+				// write Field+Expression only if index are used
+				if (index.Field.Length > 0)
+				{
+					writer.Write(index.Field + "=" + "$." + index.Field);
+				}
+				else
+				{
+					writer.Write("");
+				}
 
-                writer.Write(index.Unique);
-                writer.Write(index.HeadNode);
-                writer.Write(index.TailNode);
-                writer.Write(index.FreeIndexPageID);
-            }
+				writer.Write(index.Unique);
+				writer.Write(index.HeadNode);
+				writer.Write(index.TailNode);
+				writer.Write(index.FreeIndexPageID);
+			}
 
-            // position on page-footer (avoid file structure change)
-            writer.Position = BasePage.PAGE_SIZE - 8 - CollectionIndex.INDEX_PER_COLLECTION;
+			// position on page-footer (avoid file structure change)
+			writer.Position = BasePage.PAGE_SIZE - 8 - CollectionIndex.INDEX_PER_COLLECTION;
 
-            foreach (var index in this.Indexes)
-            {
-                writer.Write(index.MaxLevel);
-            }
+			foreach (var index in this.Indexes)
+			{
+				writer.Write(index.MaxLevel);
+			}
 
-            writer.Write(this.Sequence);
-        }
+			writer.Write(this.Sequence);
+		}
 
-        #endregion
+		#endregion
 
-        #region Methods to work with index array
+		#region Methods to work with index array
 
-        /// <summary>
-        /// Returns the first unused index slot in the <see cref="Indexes"/> array.
-        /// </summary>
-        /// <returns>An empty <see cref="CollectionIndex"/> ready for use.</returns>
-        public CollectionIndex GetFreeIndex()
-        {
-            for (byte i = 0; i < this.Indexes.Length; i++)
-            {
-                if (this.Indexes[i].IsEmpty) return this.Indexes[i];
-            }
+		/// <summary>
+		/// Returns the first unused index slot in the <see cref="Indexes"/> array.
+		/// </summary>
+		/// <returns>An empty <see cref="CollectionIndex"/> ready for use.</returns>
+		public CollectionIndex GetFreeIndex()
+		{
+			for (byte i = 0; i < this.Indexes.Length; i++)
+			{
+				if (this.Indexes[i].IsEmpty) return this.Indexes[i];
+			}
 
-            throw UltraLiteException.IndexLimitExceeded(this.CollectionName);
-        }
+			throw UltraLiteException.IndexLimitExceeded(this.CollectionName);
+		}
 
-        /// <summary>
-        /// Get the <see cref="CollectionIndex"/> for the given field name (case-sensitive). Returns null if not found.
-        /// </summary>
-        /// <param name="field">The field name to look up.</param>
-        /// <returns>The matching index, or null if no index exists for the field.</returns>
-        public CollectionIndex? GetIndex(string? field)
-        {
-            return this.Indexes.FirstOrDefault(x => x.Field == field);
-        }
+		/// <summary>
+		/// Get the <see cref="CollectionIndex"/> for the given field name (case-sensitive). Returns null if not found.
+		/// </summary>
+		/// <param name="field">The field name to look up.</param>
+		/// <returns>The matching index, or null if no index exists for the field.</returns>
+		public CollectionIndex? GetIndex(string? field)
+		{
+			return this.Indexes.FirstOrDefault(x => x.Field == field);
+		}
 
-        /// <summary>
-        /// Get primary key index (_id index)
-        /// </summary>
-        public CollectionIndex PK { get { return this.Indexes[0]; } }
+		/// <summary>
+		/// Get primary key index (_id index)
+		/// </summary>
+		public CollectionIndex PK { get { return this.Indexes[0]; } }
 
-        /// <summary>
-        /// Returns all non-empty (used) indexes from this collection.
-        /// </summary>
-        /// <param name="includePK">If true, includes the primary key index (slot 0); otherwise starts from slot 1.</param>
-        /// <returns>An enumeration of active <see cref="CollectionIndex"/> entries.</returns>
-        public IEnumerable<CollectionIndex> GetIndexes(bool includePK)
-        {
-            return this.Indexes.Where(x => x.IsEmpty == false && x.Slot >= (includePK ? 0 : 1));
-        }
+		/// <summary>
+		/// Returns all non-empty (used) indexes from this collection.
+		/// </summary>
+		/// <param name="includePK">If true, includes the primary key index (slot 0); otherwise starts from slot 1.</param>
+		/// <returns>An enumeration of active <see cref="CollectionIndex"/> entries.</returns>
+		public IEnumerable<CollectionIndex> GetIndexes(bool includePK)
+		{
+			return this.Indexes.Where(x => x.IsEmpty == false && x.Slot >= (includePK ? 0 : 1));
+		}
 
- 
-        #endregion
-    }
+
+		#endregion
+	}
 }

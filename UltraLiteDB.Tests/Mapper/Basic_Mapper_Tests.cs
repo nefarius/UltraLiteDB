@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,303 +8,303 @@ using System.Drawing;
 
 namespace UltraLiteDB.Tests.Mapper
 {
-    #region Model
+	#region Model
 
-    public class CustomStringEnumerable : IEnumerable<string>
-    {
-        private readonly List<string> innerList;
+	public class CustomStringEnumerable : IEnumerable<string>
+	{
+		private readonly List<string> innerList;
 
-        public CustomStringEnumerable()
-        {
-            innerList = new List<string>();
-        }
+		public CustomStringEnumerable()
+		{
+			innerList = new List<string>();
+		}
 
-        public CustomStringEnumerable(IEnumerable<string> list)
-        {
-            innerList = new List<string>(list);
-        }
+		public CustomStringEnumerable(IEnumerable<string> list)
+		{
+			innerList = new List<string>(list);
+		}
 
-        public void Add(string item)
-        {
-            innerList.Add(item);
-        }
+		public void Add(string item)
+		{
+			innerList.Add(item);
+		}
 
-        public IEnumerator<string> GetEnumerator()
-        {
-            return innerList.GetEnumerator();
-        }
+		public IEnumerator<string> GetEnumerator()
+		{
+			return innerList.GetEnumerator();
+		}
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-    }
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
+		}
+	}
 
-    public enum MyEnum { First, Second }
+	public enum MyEnum { First, Second }
 
-    public class MyClass
-    {
-        [BsonId(false)]
-        public int MyId { get; set; }
+	public class MyClass
+	{
+		[BsonId(false)]
+		public int MyId { get; set; }
 
-        [BsonField("MY-STRING")]
-        public string? MyString { get; set; }
+		[BsonField("MY-STRING")]
+		public string? MyString { get; set; }
 
-        public Guid MyGuid { get; set; }
-        public DateTime MyDateTime { get; set; }
-        public DateTime? MyDateTimeNullable { get; set; }
-        public int? MyIntNullable { get; set; }
-        public MyEnum MyEnumProp { get; set; }
-        public char MyChar { get; set; }
-        public byte MyByte { get; set; }
-        public sbyte MySByte { get; set; }
-        public TimeSpan MyTimespan { get; set; }
+		public Guid MyGuid { get; set; }
+		public DateTime MyDateTime { get; set; }
+		public DateTime? MyDateTimeNullable { get; set; }
+		public int? MyIntNullable { get; set; }
+		public MyEnum MyEnumProp { get; set; }
+		public char MyChar { get; set; }
+		public byte MyByte { get; set; }
+		public sbyte MySByte { get; set; }
+		public TimeSpan MyTimespan { get; set; }
 
-        public decimal MyDecimal { get; set; }
+		public decimal MyDecimal { get; set; }
 
-        public decimal? MyDecimalNullable { get; set; }
+		public decimal? MyDecimalNullable { get; set; }
 
-        public Uri? MyUri { get; set; }
+		public Uri? MyUri { get; set; }
 
-        public byte[]? MyByteArray { get; set; }
-        public ArraySegment<byte> MyArraySegment { get; set; }
+		public byte[]? MyByteArray { get; set; }
+		public ArraySegment<byte> MyArraySegment { get; set; }
 
-        // do not serialize this properties
-        [BsonIgnore]
-        public string? MyIgnore { get; set; }
+		// do not serialize this properties
+		[BsonIgnore]
+		public string? MyIgnore { get; set; }
 
-        public string? MyReadOnly { get { return "read only"; } }
-        public string? MyWriteOnly { set; private get; }
+		public string? MyReadOnly { get { return "read only"; } }
+		public string? MyWriteOnly { set; private get; }
 
-        // lists
-        public string[]? MyStringArray { get; set; }
+		// lists
+		public string[]? MyStringArray { get; set; }
 
-        public List<string>? MyStringList { get; set; }
-        public IEnumerable<string>? MyStringEnumerable { get; set; }
-        public CustomStringEnumerable? CustomStringEnumerable { get; set; }
-        public Dictionary<int, string>? MyDict { get; set; }
-        public Dictionary<StringComparison, string>? MyDictEnum { get; set; }
+		public List<string>? MyStringList { get; set; }
+		public IEnumerable<string>? MyStringEnumerable { get; set; }
+		public CustomStringEnumerable? CustomStringEnumerable { get; set; }
+		public Dictionary<int, string>? MyDict { get; set; }
+		public Dictionary<StringComparison, string>? MyDictEnum { get; set; }
 
-        // list of structs
-        public ICollection<Point>? MyCollectionPoint { get; set; }
-        public IList<Point>? MyListPoint { get; set; }
-        public IEnumerable<Point>? MyEnumerablePoint { get; set; }
+		// list of structs
+		public ICollection<Point>? MyCollectionPoint { get; set; }
+		public IList<Point>? MyListPoint { get; set; }
+		public IEnumerable<Point>? MyEnumerablePoint { get; set; }
 
-        // interfaces
-        public IMyInterface? MyInterface { get; set; }
+		// interfaces
+		public IMyInterface? MyInterface { get; set; }
 
-        public List<IMyInterface>? MyListInterface { get; set; }
-        public IList<IMyInterface>? MyIListInterface { get; set; }
+		public List<IMyInterface>? MyListInterface { get; set; }
+		public IList<IMyInterface>? MyIListInterface { get; set; }
 
-        // objects
-        public object? MyObjectString { get; set; }
+		// objects
+		public object? MyObjectString { get; set; }
 
-        public object? MyObjectInt { get; set; }
-        public object? MyObjectImpl { get; set; }
-        public List<object>? MyObjectList { get; set; }
+		public object? MyObjectInt { get; set; }
+		public object? MyObjectImpl { get; set; }
+		public List<object>? MyObjectList { get; set; }
 
-        // fields
-        public string? MyField;
-        public byte[]? MyBinaryField;
-        public ArraySegment<byte> MyArraySegmentField;
+		// fields
+		public string? MyField;
+		public byte[]? MyBinaryField;
+		public ArraySegment<byte> MyArraySegmentField;
 
-        // this is a indexer property - should not be serialized #795
-        public string? this[string itemName]
-        {
-            get
-            {
-                return this.MyString;
-            }
-            set
-            {
-                this.MyString = value;
-            }
-        }
+		// this is a indexer property - should not be serialized #795
+		public string? this[string itemName]
+		{
+			get
+			{
+				return this.MyString;
+			}
+			set
+			{
+				this.MyString = value;
+			}
+		}
 
-    }
+	}
 
-    public interface IMyInterface
-    {
-        string? Name { get; set; }
-    }
+	public interface IMyInterface
+	{
+		string? Name { get; set; }
+	}
 
-    public class MyImpl : IMyInterface
-    {
-        public string? Name { get; set; }
-    }
+	public class MyImpl : IMyInterface
+	{
+		public string? Name { get; set; }
+	}
 
-    public class MyFluentEntity
-    {
-        public int MyPrimaryPk { get; set; }
-        public string? CustomName { get; set; }
-        public bool DoNotIncludeMe { get; set; }
-        public DateTime MyDateIndexed { get; set; }
-    }
+	public class MyFluentEntity
+	{
+		public int MyPrimaryPk { get; set; }
+		public string? CustomName { get; set; }
+		public bool DoNotIncludeMe { get; set; }
+		public DateTime MyDateIndexed { get; set; }
+	}
 
-    public class BsonContainer
-    {
-        [BsonField("nbd")]
-        public BsonDocument? NestedDoc { get; set; }
-        [BsonField("nbv")]
-        public BsonValue? NestedDocAsValue { get; set; }
-    }
+	public class BsonContainer
+	{
+		[BsonField("nbd")]
+		public BsonDocument? NestedDoc { get; set; }
+		[BsonField("nbv")]
+		public BsonValue? NestedDocAsValue { get; set; }
+	}
 
-    #endregion
+	#endregion
 
-    [TestClass]
-    public class Basic_Mapper_Tests
-    {
-        private MyClass CreateModel()
-        {
-            var c = new MyClass
-            {
-                MyId = 123,
-                MyString = "John",
-                MyGuid = Guid.NewGuid(),
-                MyDateTime = DateTime.Now,
-                //MyProperty = "SerializeTHIS",
-                MyIgnore = "IgnoreTHIS",
-                MyIntNullable = 999,
-                MyStringList = new List<string>() { "String-1", "String-2" },
-                MyWriteOnly = "write-only",
-                //MyInternalProperty = "internal-field",
-                MyDict = new Dictionary<int, string>() { { 1, "Row1" }, { 2, "Row2" } },
-                MyDictEnum = new Dictionary<StringComparison, string>() { { StringComparison.Ordinal, "ordinal" } },
-                MyStringArray = new string[] { "One", "Two" },
-                MyStringEnumerable = new string[] { "One", "Two" },
-                CustomStringEnumerable = new CustomStringEnumerable(new string[] { "One", "Two" }),
+	[TestClass]
+	public class Basic_Mapper_Tests
+	{
+		private MyClass CreateModel()
+		{
+			var c = new MyClass
+			{
+				MyId = 123,
+				MyString = "John",
+				MyGuid = Guid.NewGuid(),
+				MyDateTime = DateTime.Now,
+				//MyProperty = "SerializeTHIS",
+				MyIgnore = "IgnoreTHIS",
+				MyIntNullable = 999,
+				MyStringList = new List<string>() { "String-1", "String-2" },
+				MyWriteOnly = "write-only",
+				//MyInternalProperty = "internal-field",
+				MyDict = new Dictionary<int, string>() { { 1, "Row1" }, { 2, "Row2" } },
+				MyDictEnum = new Dictionary<StringComparison, string>() { { StringComparison.Ordinal, "ordinal" } },
+				MyStringArray = new string[] { "One", "Two" },
+				MyStringEnumerable = new string[] { "One", "Two" },
+				CustomStringEnumerable = new CustomStringEnumerable(new string[] { "One", "Two" }),
 
-                MyByteArray = new byte[] { 1, 2, 3 },
-                MyArraySegment = new ArraySegment<byte>(new byte[] { 0,1,2,3,4}, 1, 3),
+				MyByteArray = new byte[] { 1, 2, 3 },
+				MyArraySegment = new ArraySegment<byte>(new byte[] { 0, 1, 2, 3, 4 }, 1, 3),
 
-                // list of structs
-                MyCollectionPoint = new List<Point> { new Point(1, 1), Point.Empty },
-                MyListPoint = new List<Point> { new Point(1, 1), Point.Empty },
-                MyEnumerablePoint = new[] { new Point(1, 1), Point.Empty },
+				// list of structs
+				MyCollectionPoint = new List<Point> { new Point(1, 1), Point.Empty },
+				MyListPoint = new List<Point> { new Point(1, 1), Point.Empty },
+				MyEnumerablePoint = new[] { new Point(1, 1), Point.Empty },
 
-                MyEnumProp = MyEnum.Second,
-                MyChar = 'Y',
-                MyUri = new Uri("http://www.numeria.com.br"),
-                MyByte = 255,
-                MySByte = -99,
-                MyField = "Field test",
-                MyBinaryField = new byte[] { 1, 2, 3 },
-                MyArraySegmentField = new ArraySegment<byte>(new byte[] { 0,1,2,3,4}, 1, 3),
-                MyTimespan = TimeSpan.FromDays(1),
-                MyDecimal = 19.9m,
-                MyDecimalNullable = 25.5m,
+				MyEnumProp = MyEnum.Second,
+				MyChar = 'Y',
+				MyUri = new Uri("http://www.numeria.com.br"),
+				MyByte = 255,
+				MySByte = -99,
+				MyField = "Field test",
+				MyBinaryField = new byte[] { 1, 2, 3 },
+				MyArraySegmentField = new ArraySegment<byte>(new byte[] { 0, 1, 2, 3, 4 }, 1, 3),
+				MyTimespan = TimeSpan.FromDays(1),
+				MyDecimal = 19.9m,
+				MyDecimalNullable = 25.5m,
 
-                MyInterface = new MyImpl { Name = "John" },
-                MyListInterface = new List<IMyInterface>() { new MyImpl { Name = "John" } },
-                MyIListInterface = new List<IMyInterface>() { new MyImpl { Name = "John" } },
+				MyInterface = new MyImpl { Name = "John" },
+				MyListInterface = new List<IMyInterface>() { new MyImpl { Name = "John" } },
+				MyIListInterface = new List<IMyInterface>() { new MyImpl { Name = "John" } },
 
-                MyObjectString = "MyString",
-                MyObjectInt = 123,
-                MyObjectImpl = new MyImpl { Name = "John" },
-                MyObjectList = new List<object>() { 1, "ola", new MyImpl { Name = "John" }, new Uri("http://www.cnn.com") }
-            };
+				MyObjectString = "MyString",
+				MyObjectInt = 123,
+				MyObjectImpl = new MyImpl { Name = "John" },
+				MyObjectList = new List<object>() { 1, "ola", new MyImpl { Name = "John" }, new Uri("http://www.cnn.com") }
+			};
 
-            return c;
-        }
+			return c;
+		}
 
-        public BsonMapper CreateMapper()
-        {
-            var mapper = new BsonMapper();
-            mapper.UseLowerCaseDelimiter('_');
-            mapper.IncludeFields = true;
-            return mapper;
-        }
+		public BsonMapper CreateMapper()
+		{
+			var mapper = new BsonMapper();
+			mapper.UseLowerCaseDelimiter('_');
+			mapper.IncludeFields = true;
+			return mapper;
+		}
 
-        [TestMethod]
-        public void Basic_Mapper()
-        {
-            var mapper = CreateMapper();
-            var obj = CreateModel();
-            var doc = mapper.ToDocument(obj);
+		[TestMethod]
+		public void Basic_Mapper()
+		{
+			var mapper = CreateMapper();
+			var obj = CreateModel();
+			var doc = mapper.ToDocument(obj);
 
-            var json = JsonSerializer.Serialize(doc);
+			var json = JsonSerializer.Serialize(doc);
 
-            // test read-only
-            Assert.AreEqual(obj.MyReadOnly, doc["my_read_only"].AsString);
+			// test read-only
+			Assert.AreEqual(obj.MyReadOnly, doc["my_read_only"].AsString);
 
-            var nobj = mapper.ToObject<MyClass>(doc);
+			var nobj = mapper.ToObject<MyClass>(doc);
 
-            // compare object to document
-            Assert.AreEqual(doc["_id"].AsInt32, obj.MyId);
-            Assert.AreEqual(doc["MY-STRING"].AsString, obj.MyString);
-            Assert.AreEqual(doc["my_guid"].AsGuid, obj.MyGuid);
+			// compare object to document
+			Assert.AreEqual(doc["_id"].AsInt32, obj.MyId);
+			Assert.AreEqual(doc["MY-STRING"].AsString, obj.MyString);
+			Assert.AreEqual(doc["my_guid"].AsGuid, obj.MyGuid);
 
-            // compare 2 objects
-            Assert.AreEqual(obj.MyId, nobj.MyId);
-            Assert.AreEqual(obj.MyString, nobj.MyString);
-            Assert.AreEqual(obj.MyGuid, nobj.MyGuid);
-            Assert.AreEqual(obj.MyDateTime.ToString(), nobj.MyDateTime.ToString());
-            Assert.AreEqual(obj.MyDateTimeNullable, nobj.MyDateTimeNullable);
-            Assert.AreEqual(obj.MyIntNullable, nobj.MyIntNullable);
-            Assert.AreEqual(obj.MyEnumProp, nobj.MyEnumProp);
-            Assert.AreEqual(obj.MyChar, nobj.MyChar);
-            Assert.AreEqual(obj.MyByte, nobj.MyByte);
-            Assert.AreEqual(obj.MySByte, nobj.MySByte);
-            Assert.AreEqual(obj.MyField, nobj.MyField);
-            Assert.AreEqual(obj.MyBinaryField, nobj.MyBinaryField);
-            Assert.AreEqual(obj.MyArraySegmentField, nobj.MyArraySegmentField);
-            Assert.AreEqual(obj.MyTimespan, nobj.MyTimespan);
-            Assert.AreEqual(obj.MyDecimal, nobj.MyDecimal);
-            Assert.AreEqual(obj.MyUri, nobj.MyUri);
+			// compare 2 objects
+			Assert.AreEqual(obj.MyId, nobj.MyId);
+			Assert.AreEqual(obj.MyString, nobj.MyString);
+			Assert.AreEqual(obj.MyGuid, nobj.MyGuid);
+			Assert.AreEqual(obj.MyDateTime.ToString(), nobj.MyDateTime.ToString());
+			Assert.AreEqual(obj.MyDateTimeNullable, nobj.MyDateTimeNullable);
+			Assert.AreEqual(obj.MyIntNullable, nobj.MyIntNullable);
+			Assert.AreEqual(obj.MyEnumProp, nobj.MyEnumProp);
+			Assert.AreEqual(obj.MyChar, nobj.MyChar);
+			Assert.AreEqual(obj.MyByte, nobj.MyByte);
+			Assert.AreEqual(obj.MySByte, nobj.MySByte);
+			Assert.AreEqual(obj.MyField, nobj.MyField);
+			Assert.AreEqual(obj.MyBinaryField, nobj.MyBinaryField);
+			Assert.AreEqual(obj.MyArraySegmentField, nobj.MyArraySegmentField);
+			Assert.AreEqual(obj.MyTimespan, nobj.MyTimespan);
+			Assert.AreEqual(obj.MyDecimal, nobj.MyDecimal);
+			Assert.AreEqual(obj.MyUri, nobj.MyUri);
 
-            Assert.AreEqual(obj.MyByteArray, nobj.MyByteArray);
-            Assert.AreEqual(obj.MyArraySegment, nobj.MyArraySegment);
+			Assert.AreEqual(obj.MyByteArray, nobj.MyByteArray);
+			Assert.AreEqual(obj.MyArraySegment, nobj.MyArraySegment);
 
-            // list
-            Assert.AreEqual(obj.MyStringArray![0], nobj.MyStringArray![0]);
-            Assert.AreEqual(obj.MyStringArray[1], nobj.MyStringArray[1]);
-            Assert.AreEqual(obj.MyStringEnumerable!.First(), nobj.MyStringEnumerable!.First());
-            Assert.AreEqual(obj.MyStringEnumerable!.Take(1).First(), nobj.MyStringEnumerable!.Take(1).First());
-            Assert.AreEqual(true, obj.CustomStringEnumerable!.SequenceEqual(nobj.CustomStringEnumerable!));
-            Assert.AreEqual(obj.MyDict![2], nobj.MyDict![2]);
-            Assert.AreEqual(obj.MyDictEnum![StringComparison.Ordinal], nobj.MyDictEnum![StringComparison.Ordinal]);
+			// list
+			Assert.AreEqual(obj.MyStringArray![0], nobj.MyStringArray![0]);
+			Assert.AreEqual(obj.MyStringArray[1], nobj.MyStringArray[1]);
+			Assert.AreEqual(obj.MyStringEnumerable!.First(), nobj.MyStringEnumerable!.First());
+			Assert.AreEqual(obj.MyStringEnumerable!.Take(1).First(), nobj.MyStringEnumerable!.Take(1).First());
+			Assert.AreEqual(true, obj.CustomStringEnumerable!.SequenceEqual(nobj.CustomStringEnumerable!));
+			Assert.AreEqual(obj.MyDict![2], nobj.MyDict![2]);
+			Assert.AreEqual(obj.MyDictEnum![StringComparison.Ordinal], nobj.MyDictEnum![StringComparison.Ordinal]);
 
-            // list of structs
-            Assert.AreEqual(obj.MyCollectionPoint!.First(), nobj.MyCollectionPoint!.First());
-            Assert.AreEqual(obj.MyListPoint!.First(), nobj.MyListPoint!.First());
-            Assert.AreEqual(obj.MyEnumerablePoint!.First(), nobj.MyEnumerablePoint!.First());
+			// list of structs
+			Assert.AreEqual(obj.MyCollectionPoint!.First(), nobj.MyCollectionPoint!.First());
+			Assert.AreEqual(obj.MyListPoint!.First(), nobj.MyListPoint!.First());
+			Assert.AreEqual(obj.MyEnumerablePoint!.First(), nobj.MyEnumerablePoint!.First());
 
-            // interfaces
-            Assert.AreEqual(obj.MyInterface!.Name, nobj.MyInterface!.Name);
-            Assert.AreEqual(obj.MyListInterface![0].Name, nobj.MyListInterface![0].Name);
-            Assert.AreEqual(obj.MyIListInterface![0].Name, nobj.MyIListInterface![0].Name);
+			// interfaces
+			Assert.AreEqual(obj.MyInterface!.Name, nobj.MyInterface!.Name);
+			Assert.AreEqual(obj.MyListInterface![0].Name, nobj.MyListInterface![0].Name);
+			Assert.AreEqual(obj.MyIListInterface![0].Name, nobj.MyIListInterface![0].Name);
 
-            // objects
-            Assert.AreEqual(obj.MyObjectString, nobj.MyObjectString);
-            Assert.AreEqual(obj.MyObjectInt, nobj.MyObjectInt);
-            Assert.AreEqual((obj.MyObjectImpl as MyImpl)!.Name, (nobj.MyObjectImpl as MyImpl)!.Name);
-            Assert.AreEqual(obj.MyObjectList![0], obj.MyObjectList[0]);
-            Assert.AreEqual(obj.MyObjectList[1], obj.MyObjectList[1]);
-            Assert.AreEqual(obj.MyObjectList[3], obj.MyObjectList[3]);
-        }
+			// objects
+			Assert.AreEqual(obj.MyObjectString, nobj.MyObjectString);
+			Assert.AreEqual(obj.MyObjectInt, nobj.MyObjectInt);
+			Assert.AreEqual((obj.MyObjectImpl as MyImpl)!.Name, (nobj.MyObjectImpl as MyImpl)!.Name);
+			Assert.AreEqual(obj.MyObjectList![0], obj.MyObjectList[0]);
+			Assert.AreEqual(obj.MyObjectList[1], obj.MyObjectList[1]);
+			Assert.AreEqual(obj.MyObjectList[3], obj.MyObjectList[3]);
+		}
 
-        [TestMethod]
-        public void Nested_Bson_Mapper()
-        {
-            BsonContainer container = new BsonContainer();
-            container.NestedDoc = new BsonDocument();
-            container.NestedDoc["prop1"] = 1;
-            container.NestedDoc["prop2"] = "stuff";
-            container.NestedDocAsValue = container.NestedDoc;
+		[TestMethod]
+		public void Nested_Bson_Mapper()
+		{
+			BsonContainer container = new BsonContainer();
+			container.NestedDoc = new BsonDocument();
+			container.NestedDoc["prop1"] = 1;
+			container.NestedDoc["prop2"] = "stuff";
+			container.NestedDocAsValue = container.NestedDoc;
 
-            var mapper = CreateMapper();
-            BsonDocument doc = mapper.ToDocument(container);
+			var mapper = CreateMapper();
+			BsonDocument doc = mapper.ToDocument(container);
 
-            byte[] serialized = BsonWriter.Serialize(doc);
-            BsonDocument deserializedDoc = BsonReader.Deserialize(serialized);
+			byte[] serialized = BsonWriter.Serialize(doc);
+			BsonDocument deserializedDoc = BsonReader.Deserialize(serialized);
 
-            BsonValue nested = deserializedDoc["nbd"];
-            BsonValue nestedAsValue = deserializedDoc["nbv"];
+			BsonValue nested = deserializedDoc["nbd"];
+			BsonValue nestedAsValue = deserializedDoc["nbv"];
 
-            BsonDocument nestedDoc = (BsonDocument)nested;
-            BsonDocument nestedDocAsValue = (BsonDocument)nestedAsValue;
+			BsonDocument nestedDoc = (BsonDocument)nested;
+			BsonDocument nestedDocAsValue = (BsonDocument)nestedAsValue;
 
-            Assert.AreEqual(nestedDoc["prop2"], nestedDocAsValue["prop2"]);
-        }
-    }
+			Assert.AreEqual(nestedDoc["prop2"], nestedDocAsValue["prop2"]);
+		}
+	}
 }

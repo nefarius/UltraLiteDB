@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,163 +6,163 @@ using System.Text;
 
 namespace UltraLiteDB.Tests
 {
-    public class TempFile : IDisposable
-    {
-        private bool _checkIntegrity = false;
+	public class TempFile : IDisposable
+	{
+		private bool _checkIntegrity = false;
 
-        public string Filename { get; private set; }
+		public string Filename { get; private set; }
 
-        public TempFile(string ext = "db", bool checkIntegrity = true)
-        {
-            this.Filename = Path.Combine(Path.GetTempPath(), string.Format("test-{0}.{1}", Guid.NewGuid(), ext));
-            _checkIntegrity = checkIntegrity;
-        }
+		public TempFile(string ext = "db", bool checkIntegrity = true)
+		{
+			this.Filename = Path.Combine(Path.GetTempPath(), string.Format("test-{0}.{1}", Guid.NewGuid(), ext));
+			_checkIntegrity = checkIntegrity;
+		}
 
-        public void CreateDatafile()
-        {
-            using (var s = new FileStream(Filename, System.IO.FileMode.CreateNew))
-            {
-                UltraLiteEngine.CreateDatabase(s);
-            }
-        }
+		public void CreateDatafile()
+		{
+			using (var s = new FileStream(Filename, System.IO.FileMode.CreateNew))
+			{
+				UltraLiteEngine.CreateDatabase(s);
+			}
+		}
 
-        public IDiskService Disk(bool journal = true)
-        {
-            return new FileDiskService(Filename, journal);
-        }
+		public IDiskService Disk(bool journal = true)
+		{
+			return new FileDiskService(Filename, journal);
+		}
 
-        public IDiskService Disk(FileOptions options)
-        {
-            return new FileDiskService(Filename, options);
-        }
+		public IDiskService Disk(FileOptions options)
+		{
+			return new FileDiskService(Filename, options);
+		}
 
-        public string Conn(string connectionString)
-        {
-            return "filename=\"" + this.Filename + "\";" + connectionString;
-        }
+		public string Conn(string connectionString)
+		{
+			return "filename=\"" + this.Filename + "\";" + connectionString;
+		}
 
-        #region Dispose
+		#region Dispose
 
-        private bool _disposed;
+		private bool _disposed;
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
 
-        ~TempFile()
-        {
-            Dispose(false);
-        }
+		~TempFile()
+		{
+			Dispose(false);
+		}
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (_disposed)
-                return;
+		protected virtual void Dispose(bool disposing)
+		{
+			if (_disposed)
+				return;
 
-            if (disposing)
-            {
-                // free other managed objects that implement
-                // IDisposable only
-            }
+			if (disposing)
+			{
+				// free other managed objects that implement
+				// IDisposable only
+			}
 
-            // check file integrity
-            if (_checkIntegrity)
-            {
-                this.CheckIntegrity();
-            }
+			// check file integrity
+			if (_checkIntegrity)
+			{
+				this.CheckIntegrity();
+			}
 
-            File.Delete(this.Filename);
+			File.Delete(this.Filename);
 
-            _disposed = true;
-        }
+			_disposed = true;
+		}
 
-        #endregion
+		#endregion
 
-        public long Size
-        {
-            get { return new FileInfo(this.Filename).Length; }
-        }
+		public long Size
+		{
+			get { return new FileInfo(this.Filename).Length; }
+		}
 
-        public string ReadAsText()
-        {
-            return File.ReadAllText(this.Filename);
-        }
+		public string ReadAsText()
+		{
+			return File.ReadAllText(this.Filename);
+		}
 
-        /// <summary>
-        /// Read all colleciton, indexes and documents inside current datafile
-        /// Drop per index, per collection and shrink
-        /// This steps will check/validate all file data
-        /// </summary>
-        private void CheckIntegrity()
-        {
-            using (var db = new UltraLiteEngine(this.Filename))
-            {
-                var cols = db.GetCollectionNames().ToArray();
+		/// <summary>
+		/// Read all colleciton, indexes and documents inside current datafile
+		/// Drop per index, per collection and shrink
+		/// This steps will check/validate all file data
+		/// </summary>
+		private void CheckIntegrity()
+		{
+			using (var db = new UltraLiteEngine(this.Filename))
+			{
+				var cols = db.GetCollectionNames().ToArray();
 
-                foreach(var col in cols)
-                {
-                    var indexes = db.GetIndexes(col).ToArray();
+				foreach (var col in cols)
+				{
+					var indexes = db.GetIndexes(col).ToArray();
 
-                    foreach(var idx in indexes)
-                    {
-                        var q = db.Find(col, Query.All(idx.Field));
+					foreach (var idx in indexes)
+					{
+						var q = db.Find(col, Query.All(idx.Field));
 
-                        foreach(var doc in q)
-                        {
-                            // document are ok!
-                        }
+						foreach (var doc in q)
+						{
+							// document are ok!
+						}
 
-                        // lets drop this index (if not _id)
-                        if(idx.Field != "_id")
-                        {
-                            db.DropIndex(col, idx.Field);
-                        }
-                    }
+						// lets drop this index (if not _id)
+						if (idx.Field != "_id")
+						{
+							db.DropIndex(col, idx.Field);
+						}
+					}
 
-                    // and drop collection
-                    db.DropCollection(col);
-                }
+					// and drop collection
+					db.DropCollection(col);
+				}
 
-                // and now shrink
-                db.Shrink();
-            }
-        }
+				// and now shrink
+				db.Shrink();
+			}
+		}
 
-        #region LoremIpsum Generator
+		#region LoremIpsum Generator
 
-        public static string LoremIpsum(int minWords, int maxWords,
-            int minSentences, int maxSentences,
-            int numParagraphs)
-        {
-            var words = new[] { "lorem", "ipsum", "dolor", "sit", "amet", "consectetuer",
-                "adipiscing", "elit", "sed", "diam", "nonummy", "nibh", "euismod",
-                "tincidunt", "ut", "laoreet", "dolore", "magna", "aliquam", "erat" };
+		public static string LoremIpsum(int minWords, int maxWords,
+			int minSentences, int maxSentences,
+			int numParagraphs)
+		{
+			var words = new[] { "lorem", "ipsum", "dolor", "sit", "amet", "consectetuer",
+				"adipiscing", "elit", "sed", "diam", "nonummy", "nibh", "euismod",
+				"tincidunt", "ut", "laoreet", "dolore", "magna", "aliquam", "erat" };
 
-            var rand = new Random(DateTime.Now.Millisecond);
-            var numSentences = rand.Next(maxSentences - minSentences) + minSentences + 1;
-            var numWords = rand.Next(maxWords - minWords) + minWords + 1;
+			var rand = new Random(DateTime.Now.Millisecond);
+			var numSentences = rand.Next(maxSentences - minSentences) + minSentences + 1;
+			var numWords = rand.Next(maxWords - minWords) + minWords + 1;
 
-            var result = new StringBuilder();
+			var result = new StringBuilder();
 
-            for (int p = 0; p < numParagraphs; p++)
-            {
-                for (int s = 0; s < numSentences; s++)
-                {
-                    for (int w = 0; w < numWords; w++)
-                    {
-                        if (w > 0) { result.Append(" "); }
-                        result.Append(words[rand.Next(words.Length)]);
-                    }
-                    result.Append(". ");
-                }
-                result.AppendLine();
-            }
+			for (int p = 0; p < numParagraphs; p++)
+			{
+				for (int s = 0; s < numSentences; s++)
+				{
+					for (int w = 0; w < numWords; w++)
+					{
+						if (w > 0) { result.Append(" "); }
+						result.Append(words[rand.Next(words.Length)]);
+					}
+					result.Append(". ");
+				}
+				result.AppendLine();
+			}
 
-            return result.ToString();
-        }
+			return result.ToString();
+		}
 
-        #endregion
-    }
+		#endregion
+	}
 }
